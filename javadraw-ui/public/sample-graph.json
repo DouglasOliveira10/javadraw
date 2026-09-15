@@ -1,0 +1,1082 @@
+{
+  "meta" : {
+    "name" : "shop",
+    "generatedAt" : "2026-09-15T03:19:18.325303Z",
+    "version" : "1.0-SNAPSHOT"
+  },
+  "types" : [ {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway",
+    "name" : "AbstractGateway",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "modifiers" : [ "abstract" ],
+    "interfaces" : [ "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway" ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway#<init>()V",
+      "name" : "AbstractGateway",
+      "descriptor" : "()V",
+      "signature" : "AbstractGateway()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway#log(Ljava/lang/String;)V",
+      "name" : "log",
+      "descriptor" : "(Ljava/lang/String;)V",
+      "signature" : "log(String message): void",
+      "visibility" : "PROTECTED",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "AbstractGateway.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway",
+    "name" : "CardGateway",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "superType" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway",
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway#<init>()V",
+      "name" : "CardGateway",
+      "descriptor" : "()V",
+      "signature" : "CardGateway()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+      "name" : "charge",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+      "signature" : "charge(Order order): void",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 6
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "CardGateway.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Customer",
+    "name" : "Customer",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "fields" : [ {
+      "name" : "name",
+      "type" : "String",
+      "visibility" : "PACKAGE",
+      "isStatic" : false,
+      "isFinal" : false
+    } ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Customer#<init>()V",
+      "name" : "Customer",
+      "descriptor" : "()V",
+      "signature" : "Customer()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "Customer.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository",
+    "name" : "InMemoryOrderRepository",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "interfaces" : [ "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository" ],
+    "annotations" : [ {
+      "type" : "org.springframework.stereotype.Repository"
+    } ],
+    "stereotypes" : [ "repository" ],
+    "fields" : [ {
+      "name" : "orders",
+      "type" : "Map<Long, Order>",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    } ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository#<init>()V",
+      "name" : "InMemoryOrderRepository",
+      "descriptor" : "()V",
+      "signature" : "InMemoryOrderRepository()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 10
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository#save(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "name" : "save",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "signature" : "save(Order order): Order",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 15
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository#findById(Ljava/lang/Long;)Ljava/util/Optional;",
+      "name" : "findById",
+      "descriptor" : "(Ljava/lang/Long;)Ljava/util/Optional;",
+      "signature" : "findById(Long id): Optional<Order>",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 21
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "InMemoryOrderRepository.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "name" : "Order",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "annotations" : [ {
+      "type" : "jakarta.persistence.Entity"
+    } ],
+    "stereotypes" : [ "entity" ],
+    "fields" : [ {
+      "name" : "id",
+      "type" : "Long",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : false
+    }, {
+      "name" : "customer",
+      "type" : "Customer",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : false
+    }, {
+      "name" : "status",
+      "type" : "OrderStatus",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : false
+    }, {
+      "name" : "items",
+      "type" : "List<OrderItem>",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    } ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order#<init>()V",
+      "name" : "Order",
+      "descriptor" : "()V",
+      "signature" : "Order()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 10
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order#getId()Ljava/lang/Long;",
+      "name" : "getId",
+      "descriptor" : "()Ljava/lang/Long;",
+      "signature" : "getId(): Long",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : true,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 17
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order#setId(Ljava/lang/Long;)V",
+      "name" : "setId",
+      "descriptor" : "(Ljava/lang/Long;)V",
+      "signature" : "setId(Long id): void",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : true,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 21
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order#total()Ljava/math/BigDecimal;",
+      "name" : "total",
+      "descriptor" : "()Ljava/math/BigDecimal;",
+      "signature" : "total(): BigDecimal",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 25
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "Order.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController",
+    "name" : "OrderController",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "annotations" : [ {
+      "type" : "org.springframework.web.bind.annotation.RestController"
+    }, {
+      "type" : "org.springframework.web.bind.annotation.RequestMapping",
+      "values" : {
+        "value" : [ "/orders" ]
+      }
+    } ],
+    "stereotypes" : [ "controller" ],
+    "fields" : [ {
+      "name" : "service",
+      "type" : "OrderService",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    } ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController#<init>(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderService;)V",
+      "name" : "OrderController",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderService;)V",
+      "signature" : "OrderController(OrderService service)",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 13
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController#create(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "name" : "create",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "signature" : "create(Order order): Order",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : true,
+      "endpoint" : "POST /orders",
+      "annotations" : [ {
+        "type" : "org.springframework.web.bind.annotation.PostMapping"
+      } ],
+      "line" : 19
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController#get(Ljava/lang/Long;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "name" : "get",
+      "descriptor" : "(Ljava/lang/Long;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "signature" : "get(Long id): Order",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : true,
+      "endpoint" : "GET /orders/{id}",
+      "annotations" : [ {
+        "type" : "org.springframework.web.bind.annotation.GetMapping",
+        "values" : {
+          "value" : [ "/{id}" ]
+        }
+      } ],
+      "line" : 24
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "OrderController.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem",
+    "name" : "OrderItem",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "RECORD",
+    "visibility" : "PUBLIC",
+    "fields" : [ {
+      "name" : "sku",
+      "type" : "String",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    }, {
+      "name" : "quantity",
+      "type" : "int",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    }, {
+      "name" : "price",
+      "type" : "BigDecimal",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    } ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#<init>(Ljava/lang/String;ILjava/math/BigDecimal;)V",
+      "name" : "OrderItem",
+      "descriptor" : "(Ljava/lang/String;ILjava/math/BigDecimal;)V",
+      "signature" : "OrderItem(String sku, int quantity, BigDecimal price)",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#subtotal()Ljava/math/BigDecimal;",
+      "name" : "subtotal",
+      "descriptor" : "()Ljava/math/BigDecimal;",
+      "signature" : "subtotal(): BigDecimal",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 7
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#toString()Ljava/lang/String;",
+      "name" : "toString",
+      "descriptor" : "()Ljava/lang/String;",
+      "signature" : "toString(): String",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : true,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#hashCode()I",
+      "name" : "hashCode",
+      "descriptor" : "()I",
+      "signature" : "hashCode(): int",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : true,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#equals(Ljava/lang/Object;)Z",
+      "name" : "equals",
+      "descriptor" : "(Ljava/lang/Object;)Z",
+      "signature" : "equals(Object o): boolean",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : true,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#sku()Ljava/lang/String;",
+      "name" : "sku",
+      "descriptor" : "()Ljava/lang/String;",
+      "signature" : "sku(): String",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : true,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#quantity()I",
+      "name" : "quantity",
+      "descriptor" : "()I",
+      "signature" : "quantity(): int",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : true,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#price()Ljava/math/BigDecimal;",
+      "name" : "price",
+      "descriptor" : "()Ljava/math/BigDecimal;",
+      "signature" : "price(): BigDecimal",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : true,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 5
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "OrderItem.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderNotFoundException",
+    "name" : "OrderNotFoundException",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "superType" : "java.lang.RuntimeException",
+    "stereotypes" : [ "exception" ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderNotFoundException#<init>()V",
+      "name" : "OrderNotFoundException",
+      "descriptor" : "()V",
+      "signature" : "OrderNotFoundException()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "OrderNotFoundException.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository",
+    "name" : "OrderRepository",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "INTERFACE",
+    "visibility" : "PUBLIC",
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository#save(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "name" : "save",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "signature" : "save(Order): Order",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : true,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 0
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository#findById(Ljava/lang/Long;)Ljava/util/Optional;",
+      "name" : "findById",
+      "descriptor" : "(Ljava/lang/Long;)Ljava/util/Optional;",
+      "signature" : "findById(Long): Optional<Order>",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : true,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 0
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "OrderRepository.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService",
+    "name" : "OrderService",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "annotations" : [ {
+      "type" : "org.springframework.stereotype.Service"
+    } ],
+    "stereotypes" : [ "service" ],
+    "fields" : [ {
+      "name" : "repository",
+      "type" : "OrderRepository",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    }, {
+      "name" : "gateways",
+      "type" : "List<PaymentGateway>",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isFinal" : true
+    } ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#<init>(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderRepository;Ljava/util/List;)V",
+      "name" : "OrderService",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderRepository;Ljava/util/List;)V",
+      "signature" : "OrderService(OrderRepository repository, List<PaymentGateway> gateways)",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 13
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#place(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "name" : "place",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "signature" : "place(Order order): Order",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 19
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#find(Ljava/lang/Long;)Ljava/util/Optional;",
+      "name" : "find",
+      "descriptor" : "(Ljava/lang/Long;)Ljava/util/Optional;",
+      "signature" : "find(Long id): Optional<Order>",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 24
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#enrich(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "name" : "enrich",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+      "signature" : "enrich(Order order): Order",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 28
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "OrderService.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus",
+    "name" : "OrderStatus",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "ENUM",
+    "visibility" : "PUBLIC",
+    "fields" : [ {
+      "name" : "NEW",
+      "type" : "OrderStatus",
+      "visibility" : "PUBLIC",
+      "isStatic" : true,
+      "isFinal" : true
+    }, {
+      "name" : "PAID",
+      "type" : "OrderStatus",
+      "visibility" : "PUBLIC",
+      "isStatic" : true,
+      "isFinal" : true
+    } ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#values()[Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderStatus;",
+      "name" : "values",
+      "descriptor" : "()[Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderStatus;",
+      "signature" : "values(): OrderStatus[]",
+      "visibility" : "PUBLIC",
+      "isStatic" : true,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : true,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#valueOf(Ljava/lang/String;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderStatus;",
+      "name" : "valueOf",
+      "descriptor" : "(Ljava/lang/String;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderStatus;",
+      "signature" : "valueOf(String): OrderStatus",
+      "visibility" : "PUBLIC",
+      "isStatic" : true,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : true,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#<init>(Ljava/lang/String;I)V",
+      "name" : "OrderStatus",
+      "descriptor" : "(Ljava/lang/String;I)V",
+      "signature" : "OrderStatus()",
+      "visibility" : "PRIVATE",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#<clinit>()V",
+      "name" : "static {}",
+      "descriptor" : "()V",
+      "signature" : "static {}",
+      "visibility" : "PACKAGE",
+      "isStatic" : true,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 4
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#$values()[Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderStatus;",
+      "name" : "$values",
+      "descriptor" : "()[Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderStatus;",
+      "signature" : "$values(): OrderStatus[]",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : true,
+      "entryPoint" : false,
+      "line" : 0
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "OrderStatus.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway",
+    "name" : "PaymentGateway",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "INTERFACE",
+    "visibility" : "PUBLIC",
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+      "name" : "charge",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+      "signature" : "charge(Order): void",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : true,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 0
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "PaymentGateway.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway",
+    "name" : "PixGateway",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "interfaces" : [ "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway" ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway#<init>()V",
+      "name" : "PixGateway",
+      "descriptor" : "()V",
+      "signature" : "PixGateway()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+      "name" : "charge",
+      "descriptor" : "(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+      "signature" : "charge(Order order): void",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 6
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "PixGateway.java"
+  }, {
+    "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication",
+    "name" : "ShopApplication",
+    "packageName" : "br.com.douglasoliveira10.javadraw.fixtures.shop",
+    "kind" : "CLASS",
+    "visibility" : "PUBLIC",
+    "stereotypes" : [ "application" ],
+    "methods" : [ {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication#<init>()V",
+      "name" : "ShopApplication",
+      "descriptor" : "()V",
+      "signature" : "ShopApplication()",
+      "visibility" : "PUBLIC",
+      "isStatic" : false,
+      "isAbstract" : false,
+      "isConstructor" : true,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : false,
+      "line" : 3
+    }, {
+      "id" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication#main([Ljava/lang/String;)V",
+      "name" : "main",
+      "descriptor" : "([Ljava/lang/String;)V",
+      "signature" : "main(String[] args): void",
+      "visibility" : "PUBLIC",
+      "isStatic" : true,
+      "isAbstract" : false,
+      "isConstructor" : false,
+      "accessor" : false,
+      "generated" : false,
+      "inherited" : false,
+      "entryPoint" : true,
+      "endpoint" : "main",
+      "line" : 5
+    } ],
+    "anonymous" : false,
+    "external" : false,
+    "sourceFile" : "ShopApplication.java"
+  } ],
+  "relations" : [ {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway",
+    "kind" : "IMPLEMENTS"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway",
+    "kind" : "EXTENDS"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository",
+    "kind" : "IMPLEMENTS"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "kind" : "ASSOCIATION",
+    "label" : "orders",
+    "multiplicity" : "*"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Customer",
+    "kind" : "ASSOCIATION",
+    "label" : "customer"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus",
+    "kind" : "ASSOCIATION",
+    "label" : "status"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem",
+    "kind" : "ASSOCIATION",
+    "label" : "items",
+    "multiplicity" : "*"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService",
+    "kind" : "ASSOCIATION",
+    "label" : "service"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderNotFoundException",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository",
+    "kind" : "ASSOCIATION",
+    "label" : "repository"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway",
+    "kind" : "ASSOCIATION",
+    "label" : "gateways",
+    "multiplicity" : "*"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway",
+    "kind" : "IMPLEMENTS"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway",
+    "kind" : "DEPENDENCY"
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway",
+    "kind" : "DEPENDENCY"
+  } ],
+  "calls" : [ {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway#<init>()V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway#<init>()V",
+    "kind" : "SPECIAL",
+    "line" : 3,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order#getId()Ljava/lang/Long;",
+    "kind" : "VIRTUAL",
+    "line" : 6,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.AbstractGateway#log(Ljava/lang/String;)V",
+    "kind" : "VIRTUAL",
+    "line" : 6,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository#save(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order#getId()Ljava/lang/Long;",
+    "kind" : "VIRTUAL",
+    "line" : 15,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.Order#total()Ljava/math/BigDecimal;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderItem#subtotal()Ljava/math/BigDecimal;",
+    "kind" : "DYNAMIC",
+    "line" : 25,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController#create(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#place(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "kind" : "VIRTUAL",
+    "line" : 19,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController#get(Ljava/lang/Long;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#find(Ljava/lang/Long;)Ljava/util/Optional;",
+    "kind" : "VIRTUAL",
+    "line" : 24,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController#get(Ljava/lang/Long;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderNotFoundException#<init>()V",
+    "kind" : "DYNAMIC",
+    "line" : 24,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#place(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository#save(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "kind" : "INTERFACE",
+    "line" : 20,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#place(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+    "kind" : "INTERFACE",
+    "line" : 19,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#find(Ljava/lang/Long;)Ljava/util/Optional;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository#findById(Ljava/lang/Long;)Ljava/util/Optional;",
+    "kind" : "INTERFACE",
+    "line" : 24,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#find(Ljava/lang/Long;)Ljava/util/Optional;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#enrich(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "kind" : "DYNAMIC",
+    "line" : 24,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#<clinit>()V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#<init>(Ljava/lang/String;I)V",
+    "kind" : "SPECIAL",
+    "line" : 4,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#<clinit>()V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderStatus#$values()[Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderStatus;",
+    "kind" : "STATIC",
+    "line" : 3,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication#main([Ljava/lang/String;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository#<init>()V",
+    "kind" : "SPECIAL",
+    "line" : 5,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication#main([Ljava/lang/String;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway#<init>()V",
+    "kind" : "SPECIAL",
+    "line" : 5,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication#main([Ljava/lang/String;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway#<init>()V",
+    "kind" : "SPECIAL",
+    "line" : 5,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication#main([Ljava/lang/String;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderService#<init>(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderRepository;Ljava/util/List;)V",
+    "kind" : "SPECIAL",
+    "line" : 5,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.ShopApplication#main([Ljava/lang/String;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderController#<init>(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/OrderService;)V",
+    "kind" : "SPECIAL",
+    "line" : 5,
+    "polymorphic" : false
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.CardGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+    "kind" : "OVERRIDE",
+    "line" : 0,
+    "polymorphic" : true
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository#save(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository#save(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;",
+    "kind" : "OVERRIDE",
+    "line" : 0,
+    "polymorphic" : true
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.OrderRepository#findById(Ljava/lang/Long;)Ljava/util/Optional;",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.InMemoryOrderRepository#findById(Ljava/lang/Long;)Ljava/util/Optional;",
+    "kind" : "OVERRIDE",
+    "line" : 0,
+    "polymorphic" : true
+  }, {
+    "source" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PaymentGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+    "target" : "br.com.douglasoliveira10.javadraw.fixtures.shop.PixGateway#charge(Lbr/com/douglasoliveira10/javadraw/fixtures/shop/Order;)V",
+    "kind" : "OVERRIDE",
+    "line" : 0,
+    "polymorphic" : true
+  } ]
+}

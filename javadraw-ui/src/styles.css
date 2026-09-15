@@ -1,0 +1,391 @@
+@import 'tailwindcss';
+@import '@xyflow/react/dist/style.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+:root {
+  --jd-bg: #f6f7f9;
+  --jd-grid: #d9dce3;
+  --jd-surface: #ffffff;
+  --jd-surface-2: #f3f4f7;
+  --jd-border: #e3e5ea;
+  --jd-border-strong: #cfd3db;
+  --jd-text: #17191f;
+  --jd-muted: #6b7180;
+  --jd-faint: #9aa0ad;
+  --jd-edge: #8a91a0;
+  --jd-edge-muted: #b7bcc6;
+  --jd-accent: #6d5dfc;
+  --jd-shadow: 0 1px 2px rgb(16 24 40 / 0.06), 0 4px 16px -4px rgb(16 24 40 / 0.10);
+  --jd-shadow-lg: 0 2px 6px rgb(16 24 40 / 0.08), 0 16px 40px -12px rgb(16 24 40 / 0.22);
+  color-scheme: light;
+}
+
+.dark {
+  --jd-bg: #0c0e13;
+  --jd-grid: #232733;
+  --jd-surface: #151821;
+  --jd-surface-2: #1b1f2a;
+  --jd-border: #262b37;
+  --jd-border-strong: #343a49;
+  --jd-text: #e7e9ee;
+  --jd-muted: #9097a6;
+  --jd-faint: #646b7a;
+  --jd-edge: #7c8494;
+  --jd-edge-muted: #4a5060;
+  --jd-accent: #8b7fff;
+  --jd-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px -6px rgb(0 0 0 / 0.5);
+  --jd-shadow-lg: 0 2px 8px rgb(0 0 0 / 0.5), 0 20px 48px -12px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--jd-bg);
+  color: var(--jd-text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ React Flow */
+
+.react-flow {
+  --xy-background-color: var(--jd-bg);
+  --xy-background-pattern-color: var(--jd-grid);
+  --xy-node-border-radius: 12px;
+  --xy-minimap-background-color: var(--jd-surface);
+  --xy-minimap-mask-background-color: rgb(120 120 140 / 0.12);
+  --xy-controls-button-background-color: var(--jd-surface);
+  --xy-controls-button-background-color-hover: var(--jd-surface-2);
+  --xy-controls-button-color: var(--jd-text);
+  --xy-controls-button-border-color: var(--jd-border);
+  --xy-selection-background-color: rgb(109 93 252 / 0.08);
+  --xy-selection-border: 1px dashed var(--jd-accent);
+}
+
+.react-flow__controls,
+.react-flow__minimap {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--jd-border);
+  box-shadow: var(--jd-shadow);
+}
+
+.react-flow__node {
+  transition: opacity 240ms ease;
+}
+
+.jd-fade-in {
+  animation: jd-fade 320ms ease both;
+}
+
+@keyframes jd-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.jd-handle {
+  opacity: 0;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ Cards */
+
+.jd-card {
+  background: var(--jd-surface);
+  border: 1px solid var(--jd-border);
+  border-radius: 12px;
+  box-shadow: var(--jd-shadow);
+  min-width: 190px;
+  max-width: 560px;
+  overflow: hidden;
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.jd-card::before {
+  content: '';
+  display: block;
+  height: 3px;
+  background: var(--accent, var(--jd-border-strong));
+}
+
+.react-flow__node:hover .jd-card {
+  box-shadow: var(--jd-shadow-lg);
+}
+
+.react-flow__node.selected .jd-card,
+.jd-card.jd-highlight {
+  border-color: var(--accent, var(--jd-accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, var(--jd-accent)) 22%, transparent), var(--jd-shadow-lg);
+}
+
+.jd-card.jd-external {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.jd-card.jd-interface {
+  border-style: dashed;
+}
+
+.jd-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 1.5px 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 18px;
+  white-space: nowrap;
+  color: var(--jd-text);
+}
+
+.jd-row .jd-type {
+  color: var(--jd-muted);
+}
+
+.jd-section + .jd-section {
+  border-top: 1px solid var(--jd-border);
+}
+
+.jd-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 0 7px;
+  height: 18px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, transparent);
+}
+
+.jd-group {
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  border: 1px dashed var(--jd-border-strong);
+  background: color-mix(in srgb, var(--jd-surface) 45%, transparent);
+}
+
+.jd-group-solid {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--jd-border));
+  background: color-mix(in srgb, var(--accent) 5%, var(--jd-surface));
+  box-shadow: var(--jd-shadow);
+}
+
+/* ------------------------------------------------------------------ Edges */
+
+.jd-edge {
+  fill: none;
+  stroke: var(--jd-edge);
+  stroke-width: 1.4;
+  transition: stroke 160ms ease, opacity 160ms ease;
+}
+
+.jd-edge.jd-dashed {
+  stroke-dasharray: 6 4;
+}
+
+.jd-edge.jd-dotted {
+  stroke-dasharray: 2 4;
+  stroke-linecap: round;
+}
+
+.jd-edge.jd-muted {
+  stroke: var(--jd-edge-muted);
+}
+
+.jd-edge.jd-active {
+  stroke: var(--jd-accent);
+  stroke-width: 2;
+}
+
+.jd-edge.jd-animated {
+  stroke-dasharray: 6 4;
+  animation: jd-dash 0.6s linear infinite;
+}
+
+@keyframes jd-dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+.jd-marker-fill {
+  fill: var(--jd-edge);
+}
+
+.jd-marker-hollow {
+  fill: var(--jd-surface);
+  stroke: var(--jd-edge);
+  stroke-width: 1.4;
+}
+
+.jd-marker-open {
+  fill: none;
+  stroke: var(--jd-edge);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.jd-marker-muted .jd-marker-open {
+  stroke: var(--jd-edge-muted);
+}
+
+.jd-marker-active .jd-marker-fill {
+  fill: var(--jd-accent);
+}
+
+.jd-marker-active .jd-marker-hollow,
+.jd-marker-active .jd-marker-open {
+  stroke: var(--jd-accent);
+}
+
+.jd-edge-label {
+  position: absolute;
+  pointer-events: all;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 16px;
+  padding: 0 5px;
+  border-radius: 6px;
+  color: var(--jd-muted);
+  background: var(--jd-bg);
+  white-space: nowrap;
+}
+
+.jd-edge-label.jd-active {
+  color: var(--jd-accent);
+}
+
+.jd-step {
+  position: absolute;
+  pointer-events: all;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--jd-surface);
+  background: var(--jd-edge);
+}
+
+.jd-step.jd-active {
+  background: var(--jd-accent);
+}
+
+/* ------------------------------------------------------------------ Chrome */
+
+.jd-panel {
+  background: var(--jd-surface);
+  border-color: var(--jd-border);
+}
+
+.jd-input {
+  width: 100%;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--jd-border);
+  background: var(--jd-surface-2);
+  color: var(--jd-text);
+  padding: 0 10px 0 30px;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.jd-input:focus {
+  border-color: var(--jd-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--jd-accent) 20%, transparent);
+}
+
+.jd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--jd-border);
+  background: var(--jd-surface);
+  color: var(--jd-text);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.jd-btn:hover {
+  background: var(--jd-surface-2);
+}
+
+.jd-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.jd-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 5px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--jd-text);
+}
+
+.jd-list-item:hover {
+  background: var(--jd-surface-2);
+}
+
+.jd-list-item.jd-selected {
+  background: color-mix(in srgb, var(--jd-accent) 12%, transparent);
+  color: var(--jd-accent);
+}
+
+.jd-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.jd-scroll::-webkit-scrollbar-thumb {
+  background: var(--jd-border-strong);
+  border-radius: 8px;
+}
+
+.jd-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--jd-faint);
+}
