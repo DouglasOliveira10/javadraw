@@ -13,6 +13,7 @@ import { toReactFlowEdges, toReactFlowNodes } from './diagram/toReactFlow'
 import { removeCascading, typeOfMethod, type XY } from './diagram/canvasState'
 import { alignPositions, distributePositions, keepTopLeft, type Alignment, type Axis } from './diagram/align'
 import { useCanvas } from './diagram/useCanvas'
+import type { PruneResult } from './diagram/prune'
 import { directionFor, placeNode, type Box } from './diagram/placement'
 
 export function App({ index }: { index: GraphIndex }) {
@@ -25,11 +26,11 @@ export function App({ index }: { index: GraphIndex }) {
 
 function Workspace({ index }: { index: GraphIndex }) {
   const project = index.graph.meta.name
-  const { state, dispatch, exportJson, importJson } = useCanvas(project)
+  const { state, dispatch, exportJson, importJson, restored } = useCanvas(index)
   const [dark, setDark] = useDarkMode()
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [error, setError] = useState<string>()
+  const [error, setError] = useState<string | undefined>(() => describePruning(restored))
   const { getNodes, getNode, fitView } = useReactFlow()
 
   const nodes = useMemo(() => toReactFlowNodes(state, index), [state, index])
@@ -213,7 +214,10 @@ function Workspace({ index }: { index: GraphIndex }) {
           </button>
           <ExportPngButton fileName={`${project}-diagram`} disabled={empty} />
           <ExportJsonButton fileName={`${project}-diagram`} json={exportJson} disabled={empty} />
-          <ImportJsonButton onImport={importJson} onError={setError} />
+          <ImportJsonButton
+          onImport={(text) => setError(describePruning(importJson(text)))}
+          onError={setError}
+        />
           <ClearButton onClear={() => dispatch({ type: 'clear' })} disabled={empty} />
           <button className="jd-btn px-2" onClick={() => setDark(!dark)} title="Toggle theme">
             {dark ? <Sun size={15} /> : <Moon size={15} />}
@@ -298,6 +302,19 @@ function Workspace({ index }: { index: GraphIndex }) {
 }
 
 /** Order does not matter: React Flow reports the selection in its own order, and a reorder is not a change. */
+/** Tells the user what a stale diagram lost, so cards vanishing is never a mystery. */
+function describePruning(pruned: PruneResult | null | undefined): string | undefined {
+  if (!pruned) return undefined
+  const parts: string[] = []
+  if (pruned.droppedTypes.length > 0) {
+    parts.push(`${pruned.droppedTypes.length} card(s) removed (${pruned.droppedTypes.slice(0, 3).join(', ')}): the classes are no longer in the project`)
+  }
+  if (pruned.droppedEdges > 0) {
+    parts.push(`${pruned.droppedEdges} relation(s) removed: they no longer exist in the bytecode`)
+  }
+  return parts.length > 0 ? parts.join('. ') : undefined
+}
+
 function sameIds(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false
   const known = new Set(a)

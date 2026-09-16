@@ -1,0 +1,103 @@
+import { describe, expect, it } from 'vitest'
+import { indexGraph } from '../data/graphIndex'
+import type { Graph, MethodInfo, TypeInfo } from '../data/types'
+import type { CanvasState } from './canvasState'
+import { pruneCanvas } from './prune'
+
+const method = (owner: string, name: string): MethodInfo => ({
+  id: `${owner}#${name}()V`,
+  name,
+  descriptor: '()V',
+  signature: `${name}(): void`,
+  visibility: 'PUBLIC',
+  isStatic: false,
+  isAbstract: false,
+  isConstructor: false,
+  accessor: false,
+  generated: false,
+  inherited: false,
+  entryPoint: false,
+})
+
+const place = method('app.Service', 'place')
+const save = method('app.Repo', 'save')
+
+const type = (id: string, methods: MethodInfo[]): TypeInfo => ({
+  id,
+  name: id.split('.').pop()!,
+  packageName: 'app',
+  kind: 'CLASS',
+  visibility: 'PUBLIC',
+  fields: [{ name: 'repo', type: 'Repo', visibility: 'PRIVATE', isStatic: false, isFinal: true }],
+  methods,
+  anonymous: false,
+  external: false,
+})
+
+const graph: Graph = {
+  meta: { name: 'test', generatedAt: '', version: '' },
+  types: [type('app.Service', [place]), type('app.Repo', [save])],
+  relations: [{ source: 'app.Service', target: 'app.Repo', kind: 'ASSOCIATION', label: 'repo' }],
+  calls: [{ source: place.id, target: save.id, kind: 'VIRTUAL', line: 12, polymorphic: false }],
+}
+const index = indexGraph(graph)
+
+const association = {
+  id: 'ASSOCIATION:app.Service->app.Repo:repo',
+  kind: 'ASSOCIATION' as const,
+  source: 'app.Service',
+  target: 'app.Repo',
+  label: 'repo',
+}
+
+const saved = (overrides: Partial<CanvasState> = {}): CanvasState => ({
+  version: 1,
+  project: 'test',
+  nodes: [
+    { id: 'app.Service', position: { x: 0, y: 0 }, visibleFields: ['repo'], visibleMethods: [place.id] },
+    { id: 'app.Repo', position: { x: 400, y: 0 }, visibleFields: [], visibleMethods: [save.id] },
+  ],
+  edges: [association],
+  ...overrides,
+})
+
+describe('pruneCanvas', () => {
+  it('keeps a diagram that still matches the code untouched', () => {
+    const state = saved()
+    const result = pruneCanvas(state, index)
+    expect(result.state).toBe(state)
+    expect(result.droppedTypes).toEqual([])
+    expect(result.droppedEdges).toBe(0)
+  })
+
+  it('drops cards whose class is gone, along with their edges', () => {
+    const state = saved({
+      nodes: [...saved().nodes, { id: 'app.Removed', position: { x: 0, y: 0 }, visibleFields: [], visibleMethods: [] }],
+      edges: [association, { id: 'x', kind: 'DEPENDENCY', source: 'app.Service', target: 'app.Removed' }],
+    })
+    const result = pruneCanvas(state, index)
+    expect(result.state.nodes.map((n) => n.id)).toEqual(['app.Service', 'app.Repo'])
+    expect(result.state.edges).toEqual([association])
+    expect(result.droppedTypes).toEqual(['Removed'])
+    expect(result.droppedEdges).toBe(1)
+  })
+
+  it('drops edges whose relation no longer exists in the bytecode', () => {
+    const state = saved({
+      edges: [association, { id: 'CALL:app.Service#gone()V->app.Repo#save()V', kind: 'CALL', source: 'app.Service', target: 'app.Repo' }],
+    })
+    const result = pruneCanvas(state, index)
+    expect(result.state.edges).toEqual([association])
+    expect(result.droppedEdges).toBe(1)
+  })
+
+  it('forgets members that the class no longer declares', () => {
+    const state = saved({
+      nodes: [{ id: 'app.Service', position: { x: 0, y: 0 }, visibleFields: ['repo', 'gone'], visibleMethods: ['app.Service#gone()V'] }],
+      edges: [],
+    })
+    const result = pruneCanvas(state, index)
+    expect(result.state.nodes[0]).toMatchObject({ visibleFields: ['repo'], visibleMethods: [] })
+    expect(result.droppedTypes).toEqual([])
+  })
+})

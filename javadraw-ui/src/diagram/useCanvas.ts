@@ -1,13 +1,21 @@
-import { useCallback, useEffect, useReducer } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
+import type { GraphIndex } from '../data/graphIndex'
 import { CANVAS_VERSION, canvasReducer, emptyCanvas, type CanvasAction, type CanvasState } from './canvasState'
+import { pruneCanvas, type PruneResult } from './prune'
 
 function storageKey(project: string): string {
   return `javadraw.diagram.${project}`
 }
 
 /** Canvas state with autosave; storage is best effort (it can be blocked on file:// or in private windows). */
-export function useCanvas(project: string) {
-  const [state, dispatch] = useReducer(canvasReducer, project, (p) => restore(p) ?? emptyCanvas(p))
+export function useCanvas(index: GraphIndex) {
+  const project = index.graph.meta.name
+  // A stored diagram may describe code that changed since; whatever is gone is dropped on load.
+  const [restored] = useState(() => {
+    const stored = restore(project)
+    return stored ? pruneCanvas(stored, index) : null
+  })
+  const [state, dispatch] = useReducer(canvasReducer, restored?.state ?? emptyCanvas(project))
 
   useEffect(() => {
     try {
@@ -20,12 +28,16 @@ export function useCanvas(project: string) {
 
   const exportJson = useCallback(() => JSON.stringify(state, null, 2), [state])
 
-  const importJson = useCallback((text: string) => {
-    const parsed = parseCanvas(text)
-    dispatch({ type: 'replace', state: parsed })
-  }, [])
+  const importJson = useCallback(
+    (text: string): PruneResult => {
+      const pruned = pruneCanvas(parseCanvas(text), index)
+      dispatch({ type: 'replace', state: pruned.state })
+      return pruned
+    },
+    [index],
+  )
 
-  return { state, dispatch: dispatch as (action: CanvasAction) => void, exportJson, importJson }
+  return { state, dispatch: dispatch as (action: CanvasAction) => void, exportJson, importJson, restored }
 }
 
 export function parseCanvas(text: string): CanvasState {
