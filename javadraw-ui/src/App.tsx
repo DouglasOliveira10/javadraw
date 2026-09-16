@@ -1,186 +1,289 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { Boxes, Moon, PanelLeft, PanelLeftClose, Sun, Workflow } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
+import { Download, LayoutGrid, Moon, Plus, Sun, Trash2, Upload, X } from 'lucide-react'
 import type { GraphIndex } from './data/graphIndex'
-import type { RelationKind } from './data/types'
-import { pluralize, qualifiedMethodLabel } from './data/format'
-import { DiagramCanvas } from './components/DiagramCanvas'
-import { DiagramContext, type DiagramActions } from './components/DiagramContext'
-import { DetailsPanel } from './components/DetailsPanel'
-import { buildStructureDiagram, defaultPackages, type StructureOptions } from './structure/buildStructureDiagram'
-import { StructureSidebar } from './structure/StructureSidebar'
-import { buildCallFlow, type CallFlowOptions } from './flow/buildCallFlow'
-import { FlowSidebar } from './flow/FlowSidebar'
-
-type View = 'structure' | 'flow'
+import type { CallEdge, Relation } from './data/types'
+import { pluralize } from './data/format'
+import { arrangePositions } from './layout/arrange'
+import { Canvas, ExportPngButton } from './diagram/Canvas'
+import { ClassPicker } from './diagram/ClassPicker'
+import { Inspector } from './diagram/Inspector'
+import { toReactFlowEdges, toReactFlowNodes } from './diagram/toReactFlow'
+import { typeOfMethod, type XY } from './diagram/canvasState'
+import { useCanvas } from './diagram/useCanvas'
+import { directionFor, placeNode, type Box } from './diagram/placement'
 
 export function App({ index }: { index: GraphIndex }) {
-  const [view, setView] = useState<View>('structure')
+  return (
+    <ReactFlowProvider>
+      <Workspace index={index} />
+    </ReactFlowProvider>
+  )
+}
+
+function Workspace({ index }: { index: GraphIndex }) {
+  const project = index.graph.meta.name
+  const { state, dispatch, exportJson, importJson } = useCanvas(project)
   const [dark, setDark] = useDarkMode()
-  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [error, setError] = useState<string>()
+  const { getNodes, getNode, fitView } = useReactFlow()
 
-  const [structure, setStructure] = useState<StructureOptions>(() => ({
-    packages: defaultPackages(index),
-    focus: null,
-    relationKinds: new Set<RelationKind>(['EXTENDS', 'IMPLEMENTS', 'ASSOCIATION']),
-    detail: 'all',
-    showExternal: false,
-    hideAccessors: true,
-    groupByPackage: false,
-    maxMembers: 14,
-    expanded: new Set(),
-  }))
+  const nodes = useMemo(() => toReactFlowNodes(state, index), [state, index])
+  const edges = useMemo(() => toReactFlowEdges(state), [state])
+  const onCanvas = useMemo(() => new Set(state.nodes.map((n) => n.id)), [state])
+  const empty = state.nodes.length === 0
 
-  const [flowRoot, setFlowRoot] = useState<string | null>(() => defaultRoot(index))
-  const [flow, setFlow] = useState<CallFlowOptions>({
-    depth: 4,
-    expanded: new Set(),
-    hideAccessors: true,
-    hideConstructors: false,
-    showExternal: false,
-    maxNodes: 300,
-  })
+  /** Bounding boxes of the cards already placed, so a new one does not land on top of them. */
+  const boxes = useCallback((): Box[] => {
+    return state.nodes
+      .filter((n) => n.position)
+      .map((n) => {
+        const measured = getNode(n.id)?.measured
+        return { ...n.position!, width: measured?.width ?? 240, height: measured?.height ?? 90 }
+      })
+  }, [state, getNode])
 
-  const patchStructure = useCallback((patch: Partial<StructureOptions>) => setStructure((s) => ({ ...s, ...patch })), [])
-  const patchFlow = useCallback((patch: Partial<CallFlowOptions>) => setFlow((s) => ({ ...s, ...patch })), [])
-
-  const structureDiagram = useMemo(() => buildStructureDiagram(index, structure), [index, structure])
-  const callFlow = useMemo(() => (flowRoot ? buildCallFlow(index, flowRoot, flow) : null), [index, flowRoot, flow])
-
-  const openFlow = useCallback((methodId: string) => {
-    setFlowRoot(methodId)
-    setFlow((f) => ({ ...f, expanded: new Set() }))
-    setView('flow')
-    setSelectedId(methodId)
-  }, [])
-
-  const focusType = useCallback((typeId: string) => {
-    setStructure((s) => ({ ...s, focus: typeId }))
-    setView('structure')
-    setSelectedId(typeId)
-  }, [])
-
-  const actions = useMemo<DiagramActions>(
-    () => ({
-      selectedId,
-      focusType,
-      openFlow,
-      expandType: (id) => setStructure((s) => ({ ...s, expanded: new Set(s.expanded).add(id) })),
-      expandMethod: (id) => setFlow((f) => ({ ...f, expanded: new Set(f.expanded).add(id) })),
-    }),
-    [selectedId, focusType, openFlow],
+  const placeNear = useCallback(
+    (originId: string, targetId: string, kind: string, outgoing: boolean): XY | undefined => {
+      if (state.nodes.some((n) => n.id === targetId)) return undefined
+      const origin = state.nodes.find((n) => n.id === originId)
+      const measured = getNode(originId)?.measured
+      const originBox = origin?.position
+        ? { ...origin.position, width: measured?.width ?? 240, height: measured?.height ?? 90 }
+        : undefined
+      return placeNode(originBox, measured ?? undefined, boxes(), directionFor(kind, outgoing))
+    },
+    [state, getNode, boxes],
   )
 
-  const projectTypes = useMemo(() => index.graph.types.filter((t) => !t.external).length, [index])
-  const rootMethod = flowRoot ? index.methods.get(flowRoot) : undefined
-  const diagram = view === 'structure' ? structureDiagram : callFlow?.diagram
-  const visibleTypes = structureDiagram.nodes.filter((n) => n.type === 'type').length
+  const addRelation = useCallback(
+    (relation: Relation, origin: string) => {
+      const other = relation.source === origin ? relation.target : relation.source
+      dispatch({ type: 'addRelation', relation, position: placeNear(origin, other, relation.kind, relation.source === origin) })
+      setSelectedId(other)
+    },
+    [dispatch, placeNear],
+  )
+
+  const addCall = useCallback(
+    (call: CallEdge, origin: string) => {
+      const source = typeOfMethod(call.source)
+      const other = source === origin ? typeOfMethod(call.target) : source
+      dispatch({ type: 'addCall', call, position: placeNear(origin, other, 'CALL', source === origin) })
+      setSelectedId(other)
+    },
+    [dispatch, placeNear],
+  )
+
+  const addType = useCallback(
+    (typeId: string) => {
+      dispatch({ type: 'addType', typeId, position: placeNode(undefined, undefined, boxes()) })
+      setSelectedId(typeId)
+      setPickerOpen(false)
+      requestAnimationFrame(() => fitView({ padding: 0.2, duration: 300, maxZoom: 1.1 }))
+    },
+    [dispatch, boxes, fitView],
+  )
+
+  const autoArrange = useCallback(async () => {
+    const positions = await arrangePositions(getNodes(), state.edges)
+    dispatch({ type: 'arrange', positions })
+    requestAnimationFrame(() => fitView({ padding: 0.1, duration: 400, maxZoom: 1.1 }))
+  }, [getNodes, state.edges, dispatch, fitView])
+
+  const remove = useCallback(
+    (typeId: string) => {
+      dispatch({ type: 'removeNode', typeId })
+      setSelectedId((current) => (current === typeId ? null : current))
+    },
+    [dispatch],
+  )
 
   return (
-    <DiagramContext.Provider value={actions}>
-      <div className="flex h-full flex-col">
-        <header className="jd-panel flex h-12 shrink-0 items-center gap-3 border-b px-3">
-          <button className="jd-btn border-transparent px-2" onClick={() => setSidebarOpen(!sidebarOpen)} title="Toggle sidebar">
-            {sidebarOpen ? <PanelLeftClose size={16} /> : <PanelLeft size={16} />}
+    <div className="flex h-full flex-col">
+      <header className="jd-panel flex h-12 shrink-0 items-center gap-3 border-b px-3">
+        <Logo />
+        <span className="text-[14px] font-semibold tracking-tight">JavaDraw</span>
+        <span className="text-[var(--jd-faint)]">/</span>
+        <span className="font-medium">{project}</span>
+        <span className="hidden text-[11.5px] text-[var(--jd-faint)] md:inline">
+          {pluralize(index.graph.types.filter((t) => !t.external).length, 'type')} analyzed
+        </span>
+
+        <div className="ml-auto flex items-center gap-2">
+          <span className="hidden text-[11.5px] text-[var(--jd-faint)] lg:inline">
+            {pluralize(state.nodes.length, 'card')} · {pluralize(state.edges.length, 'relation')}
+          </span>
+          <button
+            className="jd-btn"
+            onClick={() => setPickerOpen((open) => !open)}
+            disabled={empty}
+            title="Add a class that has no relation with the diagram"
+          >
+            {pickerOpen ? <X size={14} /> : <Plus size={14} />} Add class
           </button>
-          <div className="flex items-center gap-2">
-            <Logo />
-            <span className="text-[14px] font-semibold tracking-tight">JavaDraw</span>
-            <span className="text-[var(--jd-faint)]">/</span>
-            <span className="font-medium">{index.graph.meta.name}</span>
-            <span className="hidden text-[11.5px] text-[var(--jd-faint)] md:inline">
-              {pluralize(projectTypes, 'type')} · {pluralize(index.graph.calls?.length ?? 0, 'call')}
-            </span>
-          </div>
-
-          <nav className="mx-auto flex rounded-lg border border-[var(--jd-border)] bg-[var(--jd-surface-2)] p-0.5">
-            <ViewTab active={view === 'structure'} onClick={() => setView('structure')} icon={<Boxes size={14} />} label="Structure" />
-            <ViewTab active={view === 'flow'} onClick={() => setView('flow')} icon={<Workflow size={14} />} label="Call flow" />
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <span className="hidden text-[11.5px] text-[var(--jd-faint)] lg:inline">
-              {view === 'structure'
-                ? `${pluralize(visibleTypes, 'type')} shown`
-                : callFlow
-                  ? `${pluralize(callFlow.methodCount, 'method')}${callFlow.truncated ? ' (truncated)' : ''}`
-                  : ''}
-            </span>
-            <button className="jd-btn px-2" onClick={() => setDark(!dark)} title="Toggle theme">
-              {dark ? <Sun size={15} /> : <Moon size={15} />}
-            </button>
-          </div>
-        </header>
-
-        <div className="flex min-h-0 flex-1">
-          {sidebarOpen && (
-            <aside className="jd-panel jd-scroll w-[300px] shrink-0 overflow-y-auto border-r">
-              {view === 'structure' ? (
-                <StructureSidebar index={index} options={structure} onChange={patchStructure} onSelect={setSelectedId} />
-              ) : (
-                <FlowSidebar index={index} root={flowRoot} options={flow} onRoot={openFlow} onChange={patchFlow} />
-              )}
-            </aside>
-          )}
-
-          <main className="relative min-w-0 flex-1">
-            {view === 'flow' && rootMethod && (
-              <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-[60%]">
-                <div className="jd-panel pointer-events-auto truncate rounded-lg border px-3 py-1.5 font-mono text-[12px] shadow-sm">
-                  <span className="text-[var(--jd-faint)]">flow from </span>
-                  {qualifiedMethodLabel(index.ownerOf.get(rootMethod.id), rootMethod)}
-                </div>
-              </div>
-            )}
-            {diagram && diagram.nodes.length > 0 ? (
-              <DiagramCanvas
-                diagram={diagram}
-                dark={dark}
-                fileName={`${index.graph.meta.name}-${view}`}
-                onSelect={setSelectedId}
-              />
-            ) : (
-              <EmptyState view={view} />
-            )}
-          </main>
-
-          {selectedId && (
-            <DetailsPanel index={index} selectedId={selectedId} onClose={() => setSelectedId(null)} onFocusType={focusType} onOpenFlow={openFlow} />
-          )}
+          <button className="jd-btn" onClick={autoArrange} disabled={state.nodes.length < 2} title="Rearrange every card with ELK">
+            <LayoutGrid size={14} /> Auto-arrange
+          </button>
+          <ExportPngButton fileName={`${project}-diagram`} disabled={empty} />
+          <ExportJsonButton fileName={`${project}-diagram`} json={exportJson} disabled={empty} />
+          <ImportJsonButton onImport={importJson} onError={setError} />
+          <ClearButton onClear={() => dispatch({ type: 'clear' })} disabled={empty} />
+          <button className="jd-btn px-2" onClick={() => setDark(!dark)} title="Toggle theme">
+            {dark ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
         </div>
+      </header>
+
+      {error && (
+        <div className="flex items-center gap-2 border-b border-red-300 bg-red-50 px-4 py-1.5 text-[12px] text-red-700">
+          {error}
+          <button className="ml-auto" onClick={() => setError(undefined)}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      <div className="flex min-h-0 flex-1">
+        {(empty || pickerOpen) && (
+          <aside className="jd-panel w-[320px] shrink-0 border-r">
+            <ClassPicker
+              index={index}
+              onCanvas={onCanvas}
+              onPick={addType}
+              title={empty ? 'Start from a class' : 'Add a class'}
+              hint={
+                empty
+                  ? 'Pick the class you want to explore. From there you grow the diagram one relation at a time.'
+                  : 'The class is added loose; relate it through the panel on the right.'
+              }
+            />
+          </aside>
+        )}
+
+        <main className="relative min-w-0 flex-1">
+          {empty ? (
+            <EmptyCanvas />
+          ) : (
+            <Canvas
+              nodes={nodes}
+              edges={edges}
+              dark={dark}
+              selectedId={selectedId}
+              onSelect={setSelectedId}
+              onMove={(typeId, position) => dispatch({ type: 'moveNode', typeId, position })}
+            />
+          )}
+        </main>
+
+        {selectedId && onCanvas.has(selectedId) && (
+          <Inspector
+            index={index}
+            state={state}
+            typeId={selectedId}
+            onClose={() => setSelectedId(null)}
+            onSelect={(id) => onCanvas.has(id) && setSelectedId(id)}
+            onAddRelation={addRelation}
+            onAddCall={addCall}
+            onToggleField={(typeId, field) => dispatch({ type: 'toggleField', typeId, field })}
+            onToggleMethod={(typeId, methodId) => dispatch({ type: 'toggleMethod', typeId, methodId })}
+            onRemove={remove}
+          />
+        )}
       </div>
-    </DiagramContext.Provider>
+    </div>
   )
 }
 
-function ViewTab({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: ReactNode; label: string }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex items-center gap-1.5 rounded-md px-3 py-1 text-[12.5px] font-medium transition"
-      style={active ? { background: 'var(--jd-surface)', color: 'var(--jd-text)', boxShadow: 'var(--jd-shadow)' } : { color: 'var(--jd-muted)' }}
-    >
-      {icon}
-      {label}
-    </button>
-  )
-}
-
-function EmptyState({ view }: { view: View }) {
+function EmptyCanvas() {
   return (
     <div className="grid h-full place-items-center p-8 text-center">
       <div className="max-w-sm">
         <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-[var(--jd-surface-2)] text-[var(--jd-muted)]">
-          {view === 'structure' ? <Boxes size={22} /> : <Workflow size={22} />}
+          <Plus size={22} />
         </div>
-        <h2 className="text-[15px] font-semibold">{view === 'structure' ? 'Nothing to draw' : 'Pick a starting point'}</h2>
+        <h2 className="text-[15px] font-semibold">Empty diagram</h2>
         <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--jd-muted)]">
-          {view === 'structure'
-            ? 'Select one or more packages in the sidebar, or search for a class.'
-            : 'Choose an entry point or search for any method to follow its calls.'}
+          Choose a class on the left. Every card you add afterwards comes from a relation that exists in the analyzed
+          bytecode.
         </p>
       </div>
     </div>
+  )
+}
+
+function ExportJsonButton({ fileName, json, disabled }: { fileName: string; json: () => string; disabled: boolean }) {
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([json()], { type: 'application/json' }))
+    const link = document.createElement('a')
+    link.download = `${fileName}.json`
+    link.href = url
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+  return (
+    <button className="jd-btn px-2" onClick={download} disabled={disabled} title="Export the diagram as JSON">
+      <Download size={14} />
+    </button>
+  )
+}
+
+function ImportJsonButton({ onImport, onError }: { onImport: (text: string) => void; onError: (message: string) => void }) {
+  const input = useRef<HTMLInputElement>(null)
+  return (
+    <>
+      <input
+        ref={input}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (!file) return
+          try {
+            onImport(await file.text())
+          } catch (failure) {
+            onError(failure instanceof Error ? failure.message : String(failure))
+          }
+        }}
+      />
+      <button className="jd-btn px-2" onClick={() => input.current?.click()} title="Import a diagram JSON">
+        <Upload size={14} />
+      </button>
+    </>
+  )
+}
+
+/** Two-step so a full diagram is never lost by a stray click. */
+function ClearButton({ onClear, disabled }: { onClear: () => void; disabled: boolean }) {
+  const [confirming, setConfirming] = useState(false)
+  useEffect(() => {
+    if (!confirming) return
+    const timer = setTimeout(() => setConfirming(false), 4000)
+    return () => clearTimeout(timer)
+  }, [confirming])
+
+  return (
+    <button
+      className="jd-btn px-2"
+      style={confirming ? { color: '#ef4444', borderColor: '#ef4444' } : undefined}
+      disabled={disabled}
+      onClick={() => {
+        if (confirming) {
+          onClear()
+          setConfirming(false)
+        } else {
+          setConfirming(true)
+        }
+      }}
+      title={confirming ? 'Click again to clear the diagram' : 'Clear the diagram'}
+    >
+      <Trash2 size={14} />
+      {confirming && <span className="text-[11.5px]">Sure?</span>}
+    </button>
   )
 }
 
@@ -199,12 +302,6 @@ function Logo() {
       <path d="M8 10 V16.25 H13" stroke="white" strokeWidth="1.6" fill="none" strokeLinecap="round" />
     </svg>
   )
-}
-
-/** Prefers HTTP endpoints, then any other entry point. */
-function defaultRoot(index: GraphIndex): string | null {
-  const http = index.entryPoints.find((m) => m.endpoint && /^[A-Z]+ \//.test(m.endpoint))
-  return (http ?? index.entryPoints[0])?.id ?? null
 }
 
 function useDarkMode(): [boolean, (dark: boolean) => void] {

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import type { MethodInfo } from './types'
 import { httpVerb, parameterTypes, splitSignature } from './format'
 import { parseEmbeddedGraph } from './loadGraph'
-import { buildPackageTree } from '../structure/packageTree'
 
 const method = (signature: string, isConstructor = false) => ({ signature, isConstructor }) as MethodInfo
 
@@ -28,25 +27,5 @@ describe('format', () => {
   it('ignores the unfilled template placeholder', () => {
     expect(parseEmbeddedGraph('__JAVADRAW_DATA__')).toBeNull()
     expect(parseEmbeddedGraph('{"meta":{"name":"x"},"types":[]}')?.meta.name).toBe('x')
-  })
-})
-
-describe('buildPackageTree', () => {
-  it('compresses single-child chains', () => {
-    const tree = buildPackageTree(
-      new Map([
-        ['com.acme.shop', 2],
-        ['com.acme.shop.web', 1],
-        ['com.acme.billing', 3],
-      ]),
-    )
-    expect(tree).toHaveLength(1)
-    expect(tree[0].label).toBe('com.acme')
-    expect(tree[0].total).toBe(6)
-    expect(tree[0].children.map((c) => [c.label, c.total])).toEqual([
-      ['billing', 3],
-      ['shop', 3],
-    ])
-    expect(tree[0].children[1].packages).toEqual(['com.acme.shop', 'com.acme.shop.web'])
   })
 })
