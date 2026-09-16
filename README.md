@@ -12,7 +12,9 @@ ligações possíveis são exatamente as que existem no código.
 5. Um card só pode ser removido quando tem **no máximo uma** relação no diagrama.
 
 Posições são suas: arraste à vontade, com **Auto-arrange** ([ELK](https://eclipse.dev/elk/)) quando quiser
-organizar tudo. O diagrama é salvo automaticamente no navegador e pode ser exportado/importado em JSON, ou
+organizar tudo. Arrastar no vazio faz **seleção em caixa**; segure **espaço** (ou use o botão do meio/direito)
+para dar pan. Com dois ou mais cards selecionados o painel da direita oferece alinhar, distribuir,
+auto-arrange só da seleção, esconder/mostrar membros e remoção em lote. O diagrama é salvo automaticamente no navegador e pode ser exportado/importado em JSON, ou
 exportado em PNG. Renderização com [React Flow](https://reactflow.dev); tudo funciona offline.
 
 ## Uso

@@ -48,7 +48,11 @@ export type CanvasAction =
   | { type: 'toggleField'; typeId: string; field: string; visible?: boolean }
   | { type: 'toggleMethod'; typeId: string; methodId: string; visible?: boolean }
   | { type: 'moveNode'; typeId: string; position: XY }
-  | { type: 'arrange'; positions: Record<string, XY> }
+  | { type: 'setPositions'; positions: Record<string, XY> }
+  /** Cascading removal: whatever is left holding two or more relations stays. */
+  | { type: 'removeNodes'; typeIds: string[] }
+  /** Replaces the revealed members of several cards at once (empty lists hide everything). */
+  | { type: 'setMembers'; members: Record<string, { fields: string[]; methods: string[] }> }
   | { type: 'clear' }
   | { type: 'replace'; state: CanvasState }
 
@@ -119,13 +123,18 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
       })
     }
 
-    case 'removeNode': {
-      if (!canRemove(state, action.typeId)) return state
-      return {
-        ...state,
-        nodes: state.nodes.filter((n) => n.id !== action.typeId),
-        edges: state.edges.filter((e) => e.source !== action.typeId && e.target !== action.typeId),
+    case 'removeNode':
+      return canRemove(state, action.typeId) ? removeOne(state, action.typeId) : state
+
+    case 'removeNodes':
+      return removeCascading(state, action.typeIds).state
+
+    case 'setMembers': {
+      let next = state
+      for (const [typeId, members] of Object.entries(action.members)) {
+        next = mapNode(next, typeId, (node) => ({ ...node, visibleFields: members.fields, visibleMethods: members.methods }))
       }
+      return next
     }
 
     case 'toggleField':
@@ -134,20 +143,17 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
         return visibleFields === node.visibleFields ? node : { ...node, visibleFields }
       })
 
-    case 'toggleMethod': {
-      const next = mapNode(state, action.typeId, (node) => {
+    // Hiding a member never drops an edge: an arrow whose method is hidden is re-anchored on the card body.
+    case 'toggleMethod':
+      return mapNode(state, action.typeId, (node) => {
         const visibleMethods = toggle(node.visibleMethods, action.methodId, action.visible)
         return visibleMethods === node.visibleMethods ? node : { ...node, visibleMethods }
       })
-      const hidden = !next.nodes.find((n) => n.id === action.typeId)?.visibleMethods.includes(action.methodId)
-      // A call arrow anchored on a hidden method would have nothing to point at.
-      return hidden ? { ...next, edges: next.edges.filter((e) => !anchoredOn(e, action.methodId)) } : next
-    }
 
     case 'moveNode':
       return mapNode(state, action.typeId, (node) => ({ ...node, position: action.position }))
 
-    case 'arrange':
+    case 'setPositions':
       return {
         ...state,
         nodes: state.nodes.map((n) => (action.positions[n.id] ? { ...n, position: action.positions[n.id] } : n)),
@@ -158,6 +164,33 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
 
     case 'replace':
       return action.state
+  }
+}
+
+/**
+ * Removes as many of the given cards as the "at most one relation" rule allows, taking leaves first, so a
+ * whole branch can go at once. Returns the cards that stayed behind.
+ */
+export function removeCascading(state: CanvasState, typeIds: string[]): { state: CanvasState; blocked: string[] } {
+  const pending = new Set(typeIds.filter((id) => state.nodes.some((n) => n.id === id)))
+  let next = state
+  for (let removed = true; removed; ) {
+    removed = false
+    for (const id of pending) {
+      if (!canRemove(next, id)) continue
+      next = removeOne(next, id)
+      pending.delete(id)
+      removed = true
+    }
+  }
+  return { state: next, blocked: [...pending] }
+}
+
+function removeOne(state: CanvasState, typeId: string): CanvasState {
+  return {
+    ...state,
+    nodes: state.nodes.filter((n) => n.id !== typeId),
+    edges: state.edges.filter((e) => e.source !== typeId && e.target !== typeId),
   }
 }
 
@@ -191,10 +224,6 @@ function revealMethod(state: CanvasState, typeId: string, methodId: string): Can
   return mapNode(state, typeId, (n) =>
     n.visibleMethods.includes(methodId) ? n : { ...n, visibleMethods: [...n.visibleMethods, methodId] },
   )
-}
-
-function anchoredOn(edge: CanvasEdge, methodId: string): boolean {
-  return edge.sourceMember === methodId || edge.targetMember === methodId
 }
 
 function toggle(values: string[], value: string, visible?: boolean): string[] {

@@ -5,6 +5,7 @@ import type { CallEdge, MethodInfo, Relation } from '../data/types'
 import { parameterTypes } from '../data/format'
 import { EndpointBadge, KindBadge, StereotypePill, VisibilityGlyph } from '../components/Badges'
 import { canRemove, edgesOf, relationEdgeId, callEdgeId, type CanvasState } from './canvasState'
+import { nextSectionValue, visibilityOf, type Visibility } from './members'
 
 interface Props {
   index: GraphIndex
@@ -16,6 +17,8 @@ interface Props {
   onAddCall: (call: CallEdge, origin: string) => void
   onToggleField: (typeId: string, field: string) => void
   onToggleMethod: (typeId: string, methodId: string) => void
+  /** Reveals or hides a whole section of the card at once. */
+  onToggleSection: (typeId: string, section: 'fields' | 'methods', visible: boolean) => void
   onRemove: (typeId: string) => void
 }
 
@@ -29,6 +32,7 @@ export function Inspector({
   onAddCall,
   onToggleField,
   onToggleMethod,
+  onToggleSection,
   onRemove,
 }: Props) {
   const type = index.types.get(typeId)
@@ -40,6 +44,8 @@ export function Inspector({
   const uses = relations.filter((r) => r.source === typeId && r.kind !== 'EXTENDS' && r.kind !== 'IMPLEMENTS')
   const usedBy = relations.filter((r) => r.target === typeId && r.kind !== 'EXTENDS' && r.kind !== 'IMPLEMENTS')
   const members = (type.methods ?? []).filter((m) => !m.generated)
+  const fieldsVisibility = visibilityOf(node.visibleFields, (type.fields ?? []).map((f) => f.name))
+  const methodsVisibility = visibilityOf(node.visibleMethods, members.map((m) => m.id))
   const relationCount = edgesOf(state, typeId).length
   const removable = canRemove(state, typeId)
 
@@ -100,7 +106,17 @@ export function Inspector({
         )}
 
         {(type.fields?.length ?? 0) > 0 && (
-          <Section title={`Fields · ${type.fields!.length}`}>
+          <Section
+            title="Fields"
+            action={
+              <SectionEye
+                visibility={fieldsVisibility}
+                shown={node.visibleFields.filter((f) => type.fields!.some((field) => field.name === f)).length}
+                total={type.fields!.length}
+                onClick={() => onToggleSection(typeId, 'fields', nextSectionValue(fieldsVisibility))}
+              />
+            }
+          >
             {type.fields!.map((f) => {
               const relation = uses.find((r) => r.kind === 'ASSOCIATION' && r.label === f.name)
               return (
@@ -123,7 +139,17 @@ export function Inspector({
         )}
 
         {members.length > 0 && (
-          <Section title={`Methods · ${members.length}`}>
+          <Section
+            title="Methods"
+            action={
+              <SectionEye
+                visibility={methodsVisibility}
+                shown={members.filter((m) => node.visibleMethods.includes(m.id)).length}
+                total={members.length}
+                onClick={() => onToggleSection(typeId, 'methods', nextSectionValue(methodsVisibility))}
+              />
+            }
+          >
             {members.map((m) => (
               <MethodRow
                 key={m.id}
@@ -177,12 +203,43 @@ export function Inspector({
   )
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, children, action }: { title: string; children: ReactNode; action?: ReactNode }) {
   return (
     <div>
-      <h3 className="jd-label mb-1.5">{title}</h3>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <h3 className="jd-label">{title}</h3>
+        {action}
+      </div>
       <div className="-mx-1">{children}</div>
     </div>
+  )
+}
+
+/** Section level eye: reveals everything, or hides everything when the section is fully revealed. */
+function SectionEye({
+  visibility,
+  shown,
+  total,
+  onClick,
+}: {
+  visibility: Visibility
+  shown: number
+  total: number
+  onClick: () => void
+}) {
+  return (
+    <button
+      className={`flex items-center gap-1.5 rounded px-1 text-[10.5px] ${
+        visibility === 'none' ? 'text-[var(--jd-faint)]' : 'text-[var(--jd-accent)]'
+      } hover:bg-[var(--jd-surface-2)]`}
+      onClick={onClick}
+      title={visibility === 'all' ? 'Hide all on the card' : 'Show all on the card'}
+    >
+      <span className="font-mono">
+        {shown}/{total}
+      </span>
+      {visibility === 'none' ? <EyeOff size={13} /> : <Eye size={13} className={visibility === 'partial' ? 'opacity-60' : ''} />}
+    </button>
   )
 }
 

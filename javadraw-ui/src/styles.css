@@ -87,6 +87,29 @@ body {
   transition: opacity 240ms ease;
 }
 
+/* Arrow by default: dragging the empty canvas draws a selection box (React Flow would use a pointer). */
+.react-flow__pane,
+.react-flow__pane.selection {
+  cursor: default;
+}
+
+/* While the space bar is held the canvas pans instead. */
+.jd-panning .react-flow__pane,
+.jd-panning .react-flow__node {
+  cursor: grab;
+}
+
+.jd-panning .react-flow__pane.dragging,
+.jd-panning .react-flow__pane:active {
+  cursor: grabbing;
+}
+
+.react-flow__selection {
+  background: color-mix(in srgb, var(--jd-accent) 10%, transparent);
+  border: 1px solid var(--jd-accent);
+  border-radius: 4px;
+}
+
 .jd-fade-in {
   animation: jd-fade 320ms ease both;
 }
