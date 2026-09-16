@@ -18,7 +18,6 @@ import {
   type OnSelectionChangeParams,
 } from '@xyflow/react'
 import { toPng } from 'html-to-image'
-import { ImageDown, LoaderCircle } from 'lucide-react'
 import { accentOf } from '../theme'
 import type { TypeInfo } from '../data/types'
 import type { XY } from './canvasState'
@@ -37,11 +36,12 @@ interface Props {
   edges: Edge[]
   dark: boolean
   selectedIds: string[]
+  showMinimap: boolean
   onSelectionChange: (ids: string[]) => void
   onMove: (positions: Record<string, XY>) => void
 }
 
-export function Canvas({ nodes, edges, dark, selectedIds, onSelectionChange, onMove }: Props) {
+export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelectionChange, onMove }: Props) {
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes)
   const { getNode, fitView } = useReactFlow()
   const initialized = useNodesInitialized()
@@ -114,7 +114,7 @@ export function Canvas({ nodes, edges, dark, selectedIds, onSelectionChange, onM
         </ViewportPortal>
         <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} />
         <Controls showInteractive={false} position="bottom-left" />
-        <MiniMap pannable zoomable position="bottom-right" nodeBorderRadius={6} nodeColor={minimapColor} />
+        {showMinimap && <MiniMap pannable zoomable position="bottom-right" nodeBorderRadius={6} nodeColor={minimapColor} />}
       </ReactFlow>
     </div>
   )
@@ -157,7 +157,8 @@ function minimapColor(node: Node): string {
   return accentOf((node.data as { type?: TypeInfo }).type)
 }
 
-export function ExportPngButton({ fileName, disabled }: { fileName: string; disabled: boolean }) {
+/** Renders the current canvas to a PNG download; must be used inside the React Flow provider. */
+export function useExportPng(fileName: string): { exportPng: () => Promise<void>; busy: boolean } {
   const { getNodes } = useReactFlow()
   const [busy, setBusy] = useState(false)
 
@@ -187,10 +188,5 @@ export function ExportPngButton({ fileName, disabled }: { fileName: string; disa
     }
   }
 
-  return (
-    <button className="jd-btn" onClick={exportPng} disabled={disabled || busy} title="Export the diagram as PNG">
-      {busy ? <LoaderCircle size={14} className="animate-spin" /> : <ImageDown size={14} />}
-      PNG
-    </button>
-  )
+  return { exportPng, busy }
 }

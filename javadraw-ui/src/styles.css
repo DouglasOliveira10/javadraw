@@ -326,6 +326,56 @@ body {
   background: var(--jd-accent);
 }
 
+/* ------------------------------------------------------------------ Menu */
+
+.jd-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 30;
+  min-width: 210px;
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid var(--jd-border);
+  background: var(--jd-surface);
+  box-shadow: var(--jd-shadow-lg);
+}
+
+.jd-submenu {
+  top: -5px;
+  left: calc(100% + 2px);
+  min-width: 150px;
+}
+
+.jd-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--jd-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.jd-menu-item:hover:not(:disabled) {
+  background: var(--jd-surface-2);
+}
+
+.jd-menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.jd-menu-icon {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  color: var(--jd-muted);
+}
+
 /* ------------------------------------------------------------------ Chrome */
 
 .jd-panel {

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
-import { Download, LayoutGrid, Moon, Plus, Sun, Trash2, Upload, X } from 'lucide-react'
+import { Download, ImageDown, LayoutGrid, Map, Menu as MenuIcon, Moon, Plus, Save, Sun, Trash2, Upload, X } from 'lucide-react'
 import type { GraphIndex } from './data/graphIndex'
 import type { CallEdge, Relation } from './data/types'
 import { pluralize } from './data/format'
 import { arrangePositions } from './layout/arrange'
-import { Canvas, ExportPngButton } from './diagram/Canvas'
+import { Canvas, useExportPng } from './diagram/Canvas'
+import { Menu, MenuItem, MenuSeparator, MenuSubmenu, MenuToggle } from './components/Menu'
+import { prefersDark, useStoredFlag } from './data/preferences'
 import { ClassPicker } from './diagram/ClassPicker'
 import { Inspector } from './diagram/Inspector'
 import { SelectionPanel } from './diagram/SelectionPanel'
@@ -28,8 +30,11 @@ function Workspace({ index }: { index: GraphIndex }) {
   const project = index.graph.meta.name
   const { state, dispatch, exportJson, importJson, restored } = useCanvas(index)
   const [dark, setDark] = useDarkMode()
+  const [showMinimap, setShowMinimap] = useStoredFlag('javadraw.minimap', () => true)
+  const { exportPng, busy: exportingPng } = useExportPng(`${project}-diagram`)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
+  const importInput = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | undefined>(() => describePruning(restored))
   const { getNodes, getNode, fitView } = useReactFlow()
 
@@ -189,6 +194,20 @@ function Workspace({ index }: { index: GraphIndex }) {
   return (
     <div className="flex h-full flex-col">
       <header className="jd-panel flex h-12 shrink-0 items-center gap-3 border-b px-3">
+        <DiagramMenu
+          empty={empty}
+          canArrange={state.nodes.length >= 2}
+          pickerOpen={pickerOpen}
+          showMinimap={showMinimap}
+          onAddClass={() => setPickerOpen((open) => !open)}
+          onClear={() => dispatch({ type: 'clear' })}
+          onSave={() => downloadJson(`${project}-diagram`, exportJson())}
+          onImport={() => importInput.current?.click()}
+          onExportPng={exportPng}
+          exporting={exportingPng}
+          onToggleMinimap={setShowMinimap}
+          onAutoArrange={autoArrange}
+        />
         <Logo />
         <span className="text-[14px] font-semibold tracking-tight">JavaDraw</span>
         <span className="text-[var(--jd-faint)]">/</span>
@@ -201,29 +220,28 @@ function Workspace({ index }: { index: GraphIndex }) {
           <span className="hidden text-[11.5px] text-[var(--jd-faint)] lg:inline">
             {pluralize(state.nodes.length, 'card')} · {pluralize(state.edges.length, 'relation')}
           </span>
-          <button
-            className="jd-btn"
-            onClick={() => setPickerOpen((open) => !open)}
-            disabled={empty}
-            title="Add a class that has no relation with the diagram"
-          >
-            {pickerOpen ? <X size={14} /> : <Plus size={14} />} Add class
-          </button>
-          <button className="jd-btn" onClick={autoArrange} disabled={state.nodes.length < 2} title="Rearrange every card with ELK">
-            <LayoutGrid size={14} /> Auto-arrange
-          </button>
-          <ExportPngButton fileName={`${project}-diagram`} disabled={empty} />
-          <ExportJsonButton fileName={`${project}-diagram`} json={exportJson} disabled={empty} />
-          <ImportJsonButton
-          onImport={(text) => setError(describePruning(importJson(text)))}
-          onError={setError}
-        />
-          <ClearButton onClear={() => dispatch({ type: 'clear' })} disabled={empty} />
           <button className="jd-btn px-2" onClick={() => setDark(!dark)} title="Toggle theme">
             {dark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
       </header>
+
+      <input
+        ref={importInput}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          e.target.value = ''
+          if (!file) return
+          try {
+            setError(describePruning(importJson(await file.text())))
+          } catch (failure) {
+            setError(failure instanceof Error ? failure.message : String(failure))
+          }
+        }}
+      />
 
       {error && (
         <div className="flex items-center gap-2 border-b border-red-300 bg-red-50 px-4 py-1.5 text-[12px] text-red-700">
@@ -260,6 +278,7 @@ function Workspace({ index }: { index: GraphIndex }) {
               edges={edges}
               dark={dark}
               selectedIds={selectedIds}
+              showMinimap={showMinimap}
               onSelectionChange={selectionChanged}
               onMove={(positions) => dispatch({ type: 'setPositions', positions })}
             />
@@ -338,77 +357,75 @@ function EmptyCanvas() {
   )
 }
 
-function ExportJsonButton({ fileName, json, disabled }: { fileName: string; json: () => string; disabled: boolean }) {
-  const download = () => {
-    const url = URL.createObjectURL(new Blob([json()], { type: 'application/json' }))
-    const link = document.createElement('a')
-    link.download = `${fileName}.json`
-    link.href = url
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-  return (
-    <button className="jd-btn px-2" onClick={download} disabled={disabled} title="Export the diagram as JSON">
-      <Download size={14} />
-    </button>
-  )
+interface MenuProps {
+  empty: boolean
+  canArrange: boolean
+  pickerOpen: boolean
+  showMinimap: boolean
+  exporting: boolean
+  onAddClass: () => void
+  onClear: () => void
+  onSave: () => void
+  onImport: () => void
+  onExportPng: () => void
+  onToggleMinimap: (value: boolean) => void
+  onAutoArrange: () => void
 }
 
-function ImportJsonButton({ onImport, onError }: { onImport: (text: string) => void; onError: (message: string) => void }) {
-  const input = useRef<HTMLInputElement>(null)
+function DiagramMenu({
+  empty,
+  canArrange,
+  pickerOpen,
+  showMinimap,
+  exporting,
+  onAddClass,
+  onClear,
+  onSave,
+  onImport,
+  onExportPng,
+  onToggleMinimap,
+  onAutoArrange,
+}: MenuProps) {
+  const [confirmingClear, setConfirmingClear] = useState(false)
+  useEffect(() => {
+    if (!confirmingClear) return
+    const timer = setTimeout(() => setConfirmingClear(false), 4000)
+    return () => clearTimeout(timer)
+  }, [confirmingClear])
+
   return (
-    <>
-      <input
-        ref={input}
-        type="file"
-        accept="application/json,.json"
-        className="hidden"
-        onChange={async (e) => {
-          const file = e.target.files?.[0]
-          e.target.value = ''
-          if (!file) return
-          try {
-            onImport(await file.text())
-          } catch (failure) {
-            onError(failure instanceof Error ? failure.message : String(failure))
-          }
+    <Menu trigger={<MenuIcon size={16} />} title="Diagram menu">
+      <MenuItem icon={<Plus size={14} />} label={pickerOpen ? 'Hide class picker' : 'Add class'} disabled={empty} onSelect={onAddClass} />
+      <MenuItem
+        icon={<Trash2 size={14} />}
+        label={confirmingClear ? 'Click again to confirm' : 'Clear diagram'}
+        disabled={empty}
+        keepOpen={!confirmingClear}
+        onSelect={() => {
+          if (confirmingClear) onClear()
+          setConfirmingClear(!confirmingClear)
         }}
       />
-      <button className="jd-btn px-2" onClick={() => input.current?.click()} title="Import a diagram JSON">
-        <Upload size={14} />
-      </button>
-    </>
+      <MenuSeparator />
+      <MenuItem icon={<Save size={14} />} label="Save" hint=".json" disabled={empty} onSelect={onSave} />
+      <MenuItem icon={<Upload size={14} />} label="Import…" onSelect={onImport} />
+      <MenuSubmenu icon={<Download size={14} />} label="Export as" disabled={empty}>
+        <MenuItem icon={<ImageDown size={14} />} label={exporting ? 'Exporting…' : 'PNG'} disabled={exporting} onSelect={onExportPng} />
+      </MenuSubmenu>
+      <MenuSeparator />
+      <MenuToggle icon={<Map size={14} />} label="Show minimap" checked={showMinimap} onChange={onToggleMinimap} />
+      <MenuItem icon={<LayoutGrid size={14} />} label="Auto-arrange" disabled={!canArrange} onSelect={onAutoArrange} />
+    </Menu>
   )
 }
 
-/** Two-step so a full diagram is never lost by a stray click. */
-function ClearButton({ onClear, disabled }: { onClear: () => void; disabled: boolean }) {
-  const [confirming, setConfirming] = useState(false)
-  useEffect(() => {
-    if (!confirming) return
-    const timer = setTimeout(() => setConfirming(false), 4000)
-    return () => clearTimeout(timer)
-  }, [confirming])
-
-  return (
-    <button
-      className="jd-btn px-2"
-      style={confirming ? { color: '#ef4444', borderColor: '#ef4444' } : undefined}
-      disabled={disabled}
-      onClick={() => {
-        if (confirming) {
-          onClear()
-          setConfirming(false)
-        } else {
-          setConfirming(true)
-        }
-      }}
-      title={confirming ? 'Click again to clear the diagram' : 'Clear the diagram'}
-    >
-      <Trash2 size={14} />
-      {confirming && <span className="text-[11.5px]">Sure?</span>}
-    </button>
-  )
+function downloadJson(fileName: string, json: string) {
+  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }))
+  const link = document.createElement('a')
+  link.download = `${fileName}.json`
+  link.href = url
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
 function Logo() {
@@ -429,22 +446,20 @@ function Logo() {
 }
 
 function useDarkMode(): [boolean, (dark: boolean) => void] {
-  const [dark, setDark] = useState(() => {
-    try {
-      const stored = localStorage.getItem('javadraw.theme')
-      if (stored) return stored === 'dark'
-    } catch {
-      // storage unavailable (e.g. file:// in some browsers)
-    }
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false
-  })
+  const [dark, setDark] = useStoredFlag('javadraw.dark', legacyTheme)
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
-    try {
-      localStorage.setItem('javadraw.theme', dark ? 'dark' : 'light')
-    } catch {
-      // ignore
-    }
   }, [dark])
   return [dark, setDark]
+}
+
+/** Falls back to the theme saved by earlier versions before asking the operating system. */
+function legacyTheme(): boolean {
+  try {
+    const stored = localStorage.getItem('javadraw.theme')
+    if (stored) return stored === 'dark'
+  } catch {
+    // storage unavailable
+  }
+  return prefersDark()
 }
