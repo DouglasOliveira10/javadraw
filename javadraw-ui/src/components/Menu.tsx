@@ -1,7 +1,16 @@
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 
 const CloseContext = createContext<() => void>(() => {})
+
+/** Only one submenu is open at a time, so two panels never overlap. */
+interface Submenus {
+  active: string | null
+  open: (id: string) => void
+  close: (id: string) => void
+}
+
+const SubmenuContext = createContext<Submenus>({ active: null, open: () => {}, close: () => {} })
 
 /** Dropdown anchored to its trigger; closes on Escape, on a click outside and after an item runs. */
 export function Menu({
@@ -17,7 +26,17 @@ export function Menu({
   align?: 'left' | 'right'
 }) {
   const [open, setOpen] = useState(false)
+  const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null)
   const root = useRef<HTMLDivElement>(null)
+
+  const submenus = useMemo<Submenus>(
+    () => ({
+      active: activeSubmenu,
+      open: (id) => setActiveSubmenu(id),
+      close: (id) => setActiveSubmenu((current) => (current === id ? null : current)),
+    }),
+    [activeSubmenu],
+  )
 
   useEffect(() => {
     if (!open) return
@@ -35,12 +54,22 @@ export function Menu({
 
   return (
     <div className="relative" ref={root}>
-      <button className="jd-btn border-transparent px-2" onClick={() => setOpen(!open)} title={title} aria-expanded={open}>
+      <button
+        className="jd-btn border-transparent px-2"
+        onClick={() => {
+          setOpen(!open)
+          setActiveSubmenu(null)
+        }}
+        title={title}
+        aria-expanded={open}
+      >
         {trigger}
       </button>
       {open && (
         <div className={`jd-menu ${align === 'right' ? 'jd-menu-right' : ''}`} role="menu">
-          <CloseContext.Provider value={() => setOpen(false)}>{children}</CloseContext.Provider>
+          <CloseContext.Provider value={() => setOpen(false)}>
+            <SubmenuContext.Provider value={submenus}>{children}</SubmenuContext.Provider>
+          </CloseContext.Provider>
         </div>
       )}
     </div>
@@ -103,15 +132,56 @@ export function MenuToggle({ icon, label, checked, onChange }: { icon?: ReactNod
 
 /** Nested list, opened by hovering or clicking the parent row. */
 export function MenuSubmenu({ icon, label, children, disabled }: { icon?: ReactNode; label: ReactNode; children: ReactNode; disabled?: boolean }) {
-  const [open, setOpen] = useState(false)
+  const id = useId()
+  const submenus = useContext(SubmenuContext)
+  const open = submenus.active === id
+  const root = useRef<HTMLDivElement>(null)
+  const closing = useRef<number>(0)
+  const used = useRef(false)
+
+  useEffect(() => () => window.clearTimeout(closing.current), [])
+
+  /**
+   * The pointer leaving is only a hint. A control inside may have opened an operating system panel —
+   * the colour swatch does — and then the pointer is on its way there, not away from the menu. So wait
+   * a moment, and stay open while the focus is inside or the list has already been used: from there on
+   * it closes on the parent row, on Escape or on a click outside, never by the pointer wandering off.
+   */
+  const leave = () => {
+    window.clearTimeout(closing.current)
+    closing.current = window.setTimeout(() => {
+      if (used.current || root.current?.contains(document.activeElement)) return
+      submenus.close(id)
+    }, 120)
+  }
+
+  const enter = () => {
+    window.clearTimeout(closing.current)
+    if (!disabled) submenus.open(id)
+  }
+
   return (
-    <div className="relative" onMouseEnter={() => !disabled && setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <button className="jd-menu-item" role="menuitem" disabled={disabled} onClick={() => setOpen(!open)} aria-expanded={open}>
+    <div className="relative" ref={root} onMouseEnter={enter} onMouseLeave={leave}>
+      <button
+        className="jd-menu-item"
+        role="menuitem"
+        disabled={disabled}
+        onClick={() => {
+          used.current = false
+          if (open) submenus.close(id)
+          else submenus.open(id)
+        }}
+        aria-expanded={open}
+      >
         <span className="jd-menu-icon">{icon}</span>
         <span className="flex-1 text-left">{label}</span>
         <ChevronRight size={13} className="text-[var(--jd-faint)]" />
       </button>
-      {open && <div className="jd-menu jd-submenu">{children}</div>}
+      {open && (
+        <div className="jd-menu jd-submenu" onMouseDown={() => (used.current = true)}>
+          {children}
+        </div>
+      )}
     </div>
   )
 }
