@@ -3,6 +3,7 @@ import type { TypeKind, Visibility } from '../data/types'
 import { VISIBILITY_GLYPH, httpVerb } from '../data/format'
 import { VERB_COLORS, kindColor, stereotypeColor } from '../theme'
 import { usePalette } from '../data/palette'
+import { useI18n } from '../i18n/I18nProvider'
 
 const KIND_LETTER: Record<TypeKind, string> = {
   CLASS: 'C',
@@ -14,9 +15,11 @@ const KIND_LETTER: Record<TypeKind, string> = {
 
 export function KindBadge({ kind, abstract, size = 20 }: { kind: TypeKind; abstract?: boolean; size?: number }) {
   const color = kindColor(kind, usePalette())
+  const { t } = useI18n()
+  const name = t(`kind.${kind}`)
   return (
     <span
-      title={`${abstract ? 'abstract ' : ''}${kind.toLowerCase()}`}
+      title={abstract ? t('kind.abstract', { kind: name }) : name}
       className="inline-grid shrink-0 place-items-center rounded-full font-bold"
       style={{
         width: size,
@@ -49,9 +52,10 @@ const VISIBILITY_COLOR: Record<Visibility, string> = {
 }
 
 export function VisibilityGlyph({ visibility }: { visibility: Visibility }) {
+  const { t } = useI18n()
   return (
     <span
-      title={visibility.toLowerCase()}
+      title={t(`visibility.${visibility}`)}
       className="inline-block w-2.5 shrink-0 text-center font-bold"
       style={{ color: VISIBILITY_COLOR[visibility] }}
     >

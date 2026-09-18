@@ -4,7 +4,18 @@ import { ChevronRight } from 'lucide-react'
 const CloseContext = createContext<() => void>(() => {})
 
 /** Dropdown anchored to its trigger; closes on Escape, on a click outside and after an item runs. */
-export function Menu({ trigger, children, title }: { trigger: ReactNode; children: ReactNode; title?: string }) {
+export function Menu({
+  trigger,
+  children,
+  title,
+  align = 'left',
+}: {
+  trigger: ReactNode
+  children: ReactNode
+  title?: string
+  /** Side the popover is anchored to: 'right' keeps a trigger near the window edge from overflowing. */
+  align?: 'left' | 'right'
+}) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
 
@@ -28,7 +39,7 @@ export function Menu({ trigger, children, title }: { trigger: ReactNode; childre
         {trigger}
       </button>
       {open && (
-        <div className="jd-menu" role="menu">
+        <div className={`jd-menu ${align === 'right' ? 'jd-menu-right' : ''}`} role="menu">
           <CloseContext.Provider value={() => setOpen(false)}>{children}</CloseContext.Provider>
         </div>
       )}

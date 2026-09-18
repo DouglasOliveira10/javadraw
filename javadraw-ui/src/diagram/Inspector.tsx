@@ -4,6 +4,7 @@ import type { GraphIndex } from '../data/graphIndex'
 import type { MethodInfo, Relation } from '../data/types'
 import { parameterTypes, splitSignature } from '../data/format'
 import { EndpointBadge, KindBadge, StereotypePill, VisibilityGlyph } from '../components/Badges'
+import { useI18n } from '../i18n/I18nProvider'
 import { canRemove, edgesOf, relationEdgeId, type CanvasState } from './canvasState'
 import { nextSectionValue, visibilityOf, type Visibility } from './members'
 
@@ -42,6 +43,7 @@ export function Inspector({
   showReturnTypes,
   onRemove,
 }: Props) {
+  const { t } = useI18n()
   const type = index.types.get(typeId)
   const node = state.nodes.find((n) => n.id === typeId)
   if (!type || !node) return null
@@ -59,8 +61,8 @@ export function Inspector({
   return (
     <aside className="jd-panel jd-scroll flex w-[360px] shrink-0 flex-col overflow-y-auto border-l">
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--jd-border)] bg-[var(--jd-surface)] px-4 py-2.5">
-        <span className="jd-label">Selected</span>
-        <button className="text-[var(--jd-faint)] hover:text-[var(--jd-text)]" onClick={onClose} title="Close">
+        <span className="jd-label">{t('inspector.selected')}</span>
+        <button className="text-[var(--jd-faint)] hover:text-[var(--jd-text)]" onClick={onClose} title={t('inspector.close')}>
           <X size={16} />
         </button>
       </div>
@@ -74,34 +76,34 @@ export function Inspector({
           <div className="mt-1 break-all font-mono text-[11px] text-[var(--jd-faint)]">{type.id}</div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {type.stereotypes?.map((s) => <StereotypePill key={s} stereotype={s} />)}
-            {[...(type.modifiers ?? []), type.external ? 'library' : null].filter(Boolean).map((m) => (
+            {[...(type.modifiers ?? []), type.external ? t('inspector.library') : null].filter(Boolean).map((m) => (
               <span key={m} className="rounded-full bg-[var(--jd-surface-2)] px-2 text-[10.5px] leading-[18px] text-[var(--jd-muted)]">
                 {m}
               </span>
             ))}
           </div>
           {node.size && (
-            <button className="jd-btn mt-3 w-full justify-center" onClick={() => onAutoSize(typeId)} title="Size the card by its content again">
-              <Maximize2 size={14} /> Reset size
+            <button
+              className="jd-btn mt-3 w-full justify-center"
+              onClick={() => onAutoSize(typeId)}
+              title={t('inspector.resetSizeHint')}
+            >
+              <Maximize2 size={14} /> {t('inspector.resetSize')}
             </button>
           )}
           <button
             className="jd-btn mt-3 w-full justify-center"
             disabled={!removable}
             onClick={() => onRemove(typeId)}
-            title={
-              removable
-                ? 'Remove this card from the diagram'
-                : `Holds ${relationCount} relations; remove the other ones first`
-            }
+            title={removable ? t('inspector.removeHint') : t('inspector.lockedHint', { count: relationCount })}
           >
             <Trash2 size={14} />
-            {removable ? 'Remove from diagram' : `Locked by ${relationCount} relations`}
+            {removable ? t('inspector.removeFromDiagram') : t('inspector.locked', { count: relationCount })}
           </button>
         </div>
 
         {hierarchy.length > 0 && (
-          <Section title={`Hierarchy · ${hierarchy.length}`}>
+          <Section title={`${t('inspector.hierarchy')} · ${hierarchy.length}`}>
             {hierarchy.map((r) => (
               <RelationRow
                 key={relationEdgeId(r)}
@@ -109,7 +111,11 @@ export function Inspector({
                 state={state}
                 relation={r}
                 otherId={r.source === typeId ? r.target : r.source}
-                caption={r.source === typeId ? r.kind.toLowerCase() : r.kind === 'EXTENDS' ? 'extended by' : 'implemented by'}
+                caption={
+                  r.source === typeId
+                    ? t(r.kind === 'EXTENDS' ? 'inspector.extends' : 'inspector.implements')
+                    : t(r.kind === 'EXTENDS' ? 'inspector.extendedBy' : 'inspector.implementedBy')
+                }
                 onAdd={() => onAddRelation(r, typeId)}
                 onSelect={onSelect}
               />
@@ -119,7 +125,7 @@ export function Inspector({
 
         {(type.fields?.length ?? 0) > 0 && (
           <Section
-            title="Fields"
+            title={t('inspector.fields')}
             action={
               <SectionEye
                 visibility={fieldsVisibility}
@@ -137,7 +143,7 @@ export function Inspector({
                   visible={node.visibleFields.includes(f.name)}
                   onToggle={() => onToggleField(typeId, f.name)}
                   onAdd={relation && !onCanvas(state, relationEdgeId(relation)) ? () => onAddRelation(relation, typeId) : undefined}
-                  addTitle={relation ? `Add ${shortName(relation.target)} and link it` : undefined}
+                  addTitle={relation ? t('inspector.addAndLink', { name: shortName(relation.target) }) : undefined}
                   title={`${f.name}: ${f.type}`}
                 >
                   <VisibilityGlyph visibility={f.visibility} />
@@ -153,7 +159,7 @@ export function Inspector({
 
         {members.length > 0 && (
           <Section
-            title="Methods"
+            title={t('inspector.methods')}
             action={
               <SectionEye
                 visibility={methodsVisibility}
@@ -179,7 +185,7 @@ export function Inspector({
         )}
 
         {uses.length > 0 && (
-          <Section title={`Uses · ${uses.length}`}>
+          <Section title={`${t('inspector.uses')} · ${uses.length}`}>
             {uses.map((r) => (
               <RelationRow
                 key={relationEdgeId(r)}
@@ -187,7 +193,7 @@ export function Inspector({
                 state={state}
                 relation={r}
                 otherId={r.target}
-                caption={r.kind === 'ASSOCIATION' ? (r.label ?? 'field') : 'uses'}
+                caption={r.kind === 'ASSOCIATION' ? (r.label ?? t('inspector.fieldCaption')) : t('inspector.usesCaption')}
                 onAdd={() => onAddRelation(r, typeId)}
                 onSelect={onSelect}
               />
@@ -196,7 +202,7 @@ export function Inspector({
         )}
 
         {usedBy.length > 0 && (
-          <Section title={`Used by · ${usedBy.length}`}>
+          <Section title={`${t('inspector.usedBy')} · ${usedBy.length}`}>
             {usedBy.map((r) => (
               <RelationRow
                 key={relationEdgeId(r)}
@@ -204,7 +210,7 @@ export function Inspector({
                 state={state}
                 relation={r}
                 otherId={r.source}
-                caption={r.kind === 'ASSOCIATION' ? (r.label ?? 'field') : 'uses'}
+                caption={r.kind === 'ASSOCIATION' ? (r.label ?? t('inspector.fieldCaption')) : t('inspector.usesCaption')}
                 onAdd={() => onAddRelation(r, typeId)}
                 onSelect={onSelect}
               />
@@ -240,13 +246,14 @@ function SectionEye({
   total: number
   onClick: () => void
 }) {
+  const { t } = useI18n()
   return (
     <button
       className={`flex items-center gap-1.5 rounded px-1 text-[10.5px] ${
         visibility === 'none' ? 'text-[var(--jd-faint)]' : 'text-[var(--jd-accent)]'
       } hover:bg-[var(--jd-surface-2)]`}
       onClick={onClick}
-      title={visibility === 'all' ? 'Hide all on the card' : 'Show all on the card'}
+      title={t(visibility === 'all' ? 'inspector.hideAllOnCard' : 'inspector.showAllOnCard')}
     >
       <span className="font-mono">
         {shown}/{total}
@@ -284,12 +291,13 @@ function MemberRow({
   title?: string
   children: ReactNode
 }) {
+  const { t } = useI18n()
   return (
     <div className="flex items-center gap-1.5 rounded px-1 py-0.5 font-mono text-[11.5px] hover:bg-[var(--jd-surface-2)]" title={title}>
       <button
         className={visible ? 'text-[var(--jd-accent)]' : 'text-[var(--jd-faint)] hover:text-[var(--jd-text)]'}
         onClick={onToggle}
-        title={visible ? 'Hide on the card' : 'Show on the card'}
+        title={t(visible ? 'inspector.hideOnCard' : 'inspector.showOnCard')}
       >
         {visible ? <Eye size={13} /> : <EyeOff size={13} />}
       </button>
@@ -300,11 +308,12 @@ function MemberRow({
 }
 
 function AddButton({ onClick, title }: { onClick: () => void; title?: string }) {
+  const { t } = useI18n()
   return (
     <button
       className="shrink-0 rounded p-0.5 text-[var(--jd-faint)] hover:bg-[var(--jd-accent)] hover:text-white"
       onClick={onClick}
-      title={title ?? 'Add to the diagram'}
+      title={title ?? t('inspector.addToDiagram')}
     >
       <Plus size={13} strokeWidth={3} />
     </button>
@@ -328,6 +337,7 @@ function RelationRow({
   onAdd: () => void
   onSelect: (id: string) => void
 }) {
+  const { t } = useI18n()
   const other = index.types.get(otherId)
   const linked = onCanvas(state, relationEdgeId(relation))
   return (
@@ -337,7 +347,11 @@ function RelationRow({
         {other?.name ?? shortName(otherId)}
         <span className="ml-1.5 text-[10.5px] text-[var(--jd-faint)]">{caption}</span>
       </button>
-      {linked ? <span className="pr-1 text-[10px] text-[var(--jd-faint)]">on canvas</span> : <AddButton onClick={onAdd} />}
+      {linked ? (
+        <span className="pr-1 text-[10px] text-[var(--jd-faint)]">{t('inspector.onCanvas')}</span>
+      ) : (
+        <AddButton onClick={onAdd} />
+      )}
     </div>
   )
 }

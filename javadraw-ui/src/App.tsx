@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import {
+  Check,
   CornerDownLeft,
   Download,
   ImageDown,
   LayoutGrid,
   Map,
+  Languages,
   Menu as MenuIcon,
   Moon,
   Palette,
@@ -21,7 +23,8 @@ import {
 import type { GraphIndex } from './data/graphIndex'
 import type { PaletteControls } from './data/palette'
 import type { Relation } from './data/types'
-import { pluralize } from './data/format'
+import { useI18n, type I18n } from './i18n/I18nProvider'
+import { LOCALES } from './i18n/messages'
 import { arrangePositions } from './layout/arrange'
 import { Canvas, useExportPng } from './diagram/Canvas'
 import { Menu, MenuItem, MenuSeparator, MenuSubmenu, MenuToggle } from './components/Menu'
@@ -50,6 +53,7 @@ export function App({ index }: { index: GraphIndex }) {
 }
 
 function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteControls }) {
+  const { t, tc } = useI18n()
   const project = index.graph.meta.name
   const { state, dispatch, exportJson, importJson, restored } = useCanvas(index)
   const [dark, setDark] = useDarkMode()
@@ -61,7 +65,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
   const importInput = useRef<HTMLInputElement>(null)
-  const [error, setError] = useState<string | undefined>(() => describePruning(restored))
+  const [error, setError] = useState<string | undefined>(() => describePruning(restored, t))
   const { getNodes, getNode, fitView } = useReactFlow()
 
   const nodes = useMemo(
@@ -206,9 +210,9 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
     dispatch({ type: 'removeNodes', typeIds: selectedIds })
     setSelectedIds(blocked)
     if (blocked.length > 0) {
-      setError(`${blocked.length} card(s) kept: they still hold two or more relations.`)
+      setError(tc('notice.cardsKept', blocked.length))
     }
-  }, [state, selectedIds, dispatch])
+  }, [state, selectedIds, dispatch, tc])
 
   return (
     <div className="flex h-full flex-col">
@@ -241,14 +245,15 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
         <span className="text-[var(--jd-faint)]">/</span>
         <span className="font-medium">{project}</span>
         <span className="hidden text-[11.5px] text-[var(--jd-faint)] md:inline">
-          {pluralize(index.graph.types.filter((t) => !t.external).length, 'type')} analyzed
+          {tc('app.typesAnalyzed', index.graph.types.filter((type) => !type.external).length)}
         </span>
 
         <div className="ml-auto flex items-center gap-2">
           <span className="hidden text-[11.5px] text-[var(--jd-faint)] lg:inline">
-            {pluralize(state.nodes.length, 'card')} · {pluralize(state.edges.length, 'relation')}
+            {tc('app.cards', state.nodes.length)} · {tc('app.relations', state.edges.length)}
           </span>
-          <button className="jd-btn px-2" onClick={() => setDark(!dark)} title="Toggle theme">
+          <LanguageMenu />
+          <button className="jd-btn px-2" onClick={() => setDark(!dark)} title={t('app.toggleTheme')}>
             {dark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
@@ -264,7 +269,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
           e.target.value = ''
           if (!file) return
           try {
-            setError(describePruning(importJson(await file.text())))
+            setError(describePruning(importJson(await file.text()), t))
           } catch (failure) {
             setError(failure instanceof Error ? failure.message : String(failure))
           }
@@ -288,12 +293,8 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
               onCanvas={onCanvas}
               onPick={addType}
               onClose={empty ? undefined : () => setPickerOpen(false)}
-              title={empty ? 'Start from a class' : 'Add a class'}
-              hint={
-                empty
-                  ? 'Pick the class you want to explore. From there you grow the diagram one relation at a time.'
-                  : 'The class is added loose; relate it through the panel on the right.'
-              }
+              title={t(empty ? 'picker.startTitle' : 'picker.addTitle')}
+              hint={t(empty ? 'picker.startHint' : 'picker.addHint')}
             />
           </aside>
         )}
@@ -354,14 +355,19 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
 
 /** Order does not matter: React Flow reports the selection in its own order, and a reorder is not a change. */
 /** Tells the user what a stale diagram lost, so cards vanishing is never a mystery. */
-function describePruning(pruned: PruneResult | null | undefined): string | undefined {
+function describePruning(pruned: PruneResult | null | undefined, t: I18n['t']): string | undefined {
   if (!pruned) return undefined
   const parts: string[] = []
   if (pruned.droppedTypes.length > 0) {
-    parts.push(`${pruned.droppedTypes.length} card(s) removed (${pruned.droppedTypes.slice(0, 3).join(', ')}): the classes are no longer in the project`)
+    parts.push(
+      t('notice.cardsDropped', {
+        count: pruned.droppedTypes.length,
+        names: pruned.droppedTypes.slice(0, 3).join(', '),
+      }),
+    )
   }
   if (pruned.droppedEdges > 0) {
-    parts.push(`${pruned.droppedEdges} relation(s) removed: they no longer exist in the bytecode`)
+    parts.push(t('notice.relationsDropped', { count: pruned.droppedEdges }))
   }
   return parts.length > 0 ? parts.join('. ') : undefined
 }
@@ -372,18 +378,44 @@ function sameIds(a: string[], b: string[]): boolean {
   return b.every((id) => known.has(id))
 }
 
+/** Language switcher, next to the theme button: shows the current code and lists the others. */
+function LanguageMenu() {
+  const { locale, setLocale, t } = useI18n()
+  const current = LOCALES.find((option) => option.code === locale) ?? LOCALES[0]
+  return (
+    <Menu
+      title={t('app.language')}
+      align="right"
+      trigger={
+        <span className="flex items-center gap-1">
+          <Languages size={15} />
+          <span className="text-[10.5px] font-semibold">{current.short}</span>
+        </span>
+      }
+    >
+      {LOCALES.map((option) => (
+        <MenuItem
+          key={option.code}
+          icon={option.code === locale ? <Check size={14} /> : null}
+          label={option.label}
+          hint={option.short}
+          onSelect={() => setLocale(option.code)}
+        />
+      ))}
+    </Menu>
+  )
+}
+
 function EmptyCanvas() {
+  const { t } = useI18n()
   return (
     <div className="pointer-events-none absolute inset-0 grid place-items-center bg-[var(--jd-bg)] p-8 text-center">
       <div className="max-w-sm">
         <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-[var(--jd-surface-2)] text-[var(--jd-muted)]">
           <Plus size={22} />
         </div>
-        <h2 className="text-[15px] font-semibold">Empty diagram</h2>
-        <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--jd-muted)]">
-          Choose a class on the left. Every card you add afterwards comes from a relation that exists in the analyzed
-          bytecode.
-        </p>
+        <h2 className="text-[15px] font-semibold">{t('canvas.emptyTitle')}</h2>
+        <p className="mt-1 text-[12.5px] leading-relaxed text-[var(--jd-muted)]">{t('canvas.emptyHint')}</p>
       </div>
     </div>
   )
@@ -432,6 +464,7 @@ function DiagramMenu({
   onToggleReturnTypes,
   onAutoArrange,
 }: MenuProps) {
+  const { t } = useI18n()
   const [confirmingClear, setConfirmingClear] = useState(false)
   useEffect(() => {
     if (!confirmingClear) return
@@ -440,11 +473,16 @@ function DiagramMenu({
   }, [confirmingClear])
 
   return (
-    <Menu trigger={<MenuIcon size={16} />} title="Diagram menu">
-      <MenuItem icon={<Plus size={14} />} label={pickerOpen ? 'Hide class picker' : 'Add class'} disabled={empty} onSelect={onAddClass} />
+    <Menu trigger={<MenuIcon size={16} />} title={t('app.diagramMenu')}>
+      <MenuItem
+        icon={<Plus size={14} />}
+        label={t(pickerOpen ? 'menu.hideClassPicker' : 'menu.addClass')}
+        disabled={empty}
+        onSelect={onAddClass}
+      />
       <MenuItem
         icon={<Trash2 size={14} />}
-        label={confirmingClear ? 'Click again to confirm' : 'Clear diagram'}
+        label={t(confirmingClear ? 'menu.clearConfirm' : 'menu.clearDiagram')}
         disabled={empty}
         keepOpen={!confirmingClear}
         onSelect={() => {
@@ -453,21 +491,26 @@ function DiagramMenu({
         }}
       />
       <MenuSeparator />
-      <MenuItem icon={<Save size={14} />} label="Save" hint=".json" disabled={empty} onSelect={onSave} />
-      <MenuItem icon={<Upload size={14} />} label="Import…" onSelect={onImport} />
-      <MenuSubmenu icon={<Download size={14} />} label="Export as" disabled={empty}>
-        <MenuItem icon={<ImageDown size={14} />} label={exporting ? 'Exporting…' : 'PNG'} disabled={exporting} onSelect={onExportPng} />
+      <MenuItem icon={<Save size={14} />} label={t('menu.save')} hint=".json" disabled={empty} onSelect={onSave} />
+      <MenuItem icon={<Upload size={14} />} label={t('menu.import')} onSelect={onImport} />
+      <MenuSubmenu icon={<Download size={14} />} label={t('menu.exportAs')} disabled={empty}>
+        <MenuItem
+          icon={<ImageDown size={14} />}
+          label={exporting ? t('menu.exporting') : 'PNG'}
+          disabled={exporting}
+          onSelect={onExportPng}
+        />
       </MenuSubmenu>
       <MenuSeparator />
-      <MenuSubmenu icon={<Palette size={14} />} label="Colors">
+      <MenuSubmenu icon={<Palette size={14} />} label={t('menu.colors')}>
         <ColorMenu {...palette} />
       </MenuSubmenu>
-      <MenuToggle icon={<Type size={14} />} label="Show field types" checked={showFieldTypes} onChange={onToggleFieldTypes} />
-      <MenuToggle icon={<Parentheses size={14} />} label="Show parameters" checked={showParameters} onChange={onToggleParameters} />
-      <MenuToggle icon={<CornerDownLeft size={14} />} label="Show return types" checked={showReturnTypes} onChange={onToggleReturnTypes} />
+      <MenuToggle icon={<Type size={14} />} label={t('menu.showFieldTypes')} checked={showFieldTypes} onChange={onToggleFieldTypes} />
+      <MenuToggle icon={<Parentheses size={14} />} label={t('menu.showParameters')} checked={showParameters} onChange={onToggleParameters} />
+      <MenuToggle icon={<CornerDownLeft size={14} />} label={t('menu.showReturnTypes')} checked={showReturnTypes} onChange={onToggleReturnTypes} />
       <MenuSeparator />
-      <MenuToggle icon={<Map size={14} />} label="Show minimap" checked={showMinimap} onChange={onToggleMinimap} />
-      <MenuItem icon={<LayoutGrid size={14} />} label="Auto-arrange" disabled={!canArrange} onSelect={onAutoArrange} />
+      <MenuToggle icon={<Map size={14} />} label={t('menu.showMinimap')} checked={showMinimap} onChange={onToggleMinimap} />
+      <MenuItem icon={<LayoutGrid size={14} />} label={t('menu.autoArrange')} disabled={!canArrange} onSelect={onAutoArrange} />
     </Menu>
   )
 }

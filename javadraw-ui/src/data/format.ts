@@ -58,7 +58,3 @@ export function httpVerb(endpoint: string | undefined): HttpVerb | null {
 export function qualifiedMethodLabel(type: TypeInfo | undefined, method: MethodInfo): string {
   return `${type?.name ?? '?'}.${method.isConstructor ? '<init>' : method.name}`
 }
-
-export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
-  return `${count} ${count === 1 ? singular : plural}`
-}

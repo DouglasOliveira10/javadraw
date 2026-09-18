@@ -5,6 +5,7 @@ import { parameterTypes, splitSignature } from '../data/format'
 import type { MethodInfo } from '../data/types'
 import { accentOf } from '../theme'
 import { usePalette } from '../data/palette'
+import { useI18n } from '../i18n/I18nProvider'
 import { useCardActions } from './CardActions'
 import { cardHandle, fieldHandle, methodHandle, type Side } from './handles'
 import type { CardData } from './toReactFlow'
@@ -54,6 +55,7 @@ function CanvasCardComponent({ id, data, selected }: NodeProps<Node<CardData>>) 
   const { type, fields, methods, hiddenCount, showFieldTypes, showParameters, showReturnTypes, sized } = data
   const { resize } = useCardActions()
   const palette = usePalette()
+  const { tc } = useI18n()
   const abstract = type.modifiers?.includes('abstract')
   const classes = [
     'jd-card',
@@ -136,7 +138,7 @@ function CanvasCardComponent({ id, data, selected }: NodeProps<Node<CardData>>) 
 
         {fields.length + methods.length === 0 && hiddenCount > 0 && (
           <div className="border-t border-[var(--jd-border)] px-3 py-1 text-[10.5px] text-[var(--jd-faint)]">
-            {hiddenCount} members hidden
+            {tc('card.membersHidden', hiddenCount)}
           </div>
         )}
       </div>

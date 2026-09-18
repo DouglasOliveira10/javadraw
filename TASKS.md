@@ -3,7 +3,7 @@
 - [x] 1 - depois que dou um clear diagram -> seleciono uma nova classe (tudo se apaga na tela, so volta quando dou refresh)
 - [x] 2 - dois cliques zoom no card
 - [x] 3 - menu para ativar e desativar params e/ou retornos dos metodos no card, assim diminuindo o espaço usado, o mesmo vale para o menu da direita
-- [ ] 4 - internazionalizacao pt-br e ingles (atual)
+- [x] 4 - internazionalizacao pt-br e ingles (atual)
 - [x] 5 - criar um botao para fechar o menu de adicionar classe solta (o menu da esquerda)
 - [x] 6 - Criar menu para selecionar a cor dos tipos (Ex: se for class vermelho, se for interface verde etc, deixar usuario escolher a cor)
 - [x] 7 - ver a possibilidade de dar resize no card, porque hoje muito texto nao aparece completo.

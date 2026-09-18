@@ -4,6 +4,7 @@ import type { GraphIndex } from '../data/graphIndex'
 import type { TypeInfo } from '../data/types'
 import { SearchInput } from '../components/Controls'
 import { EndpointBadge, KindBadge, StereotypePill } from '../components/Badges'
+import { useI18n } from '../i18n/I18nProvider'
 import { buildClassTree, type PackageNode } from './classTree'
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 type Tab = 'classes' | 'entryPoints'
 
 export function ClassPicker({ index, onCanvas, onPick, title, hint, onClose }: Props) {
+  const { t } = useI18n()
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState<Tab>('classes')
 
@@ -61,17 +63,31 @@ export function ClassPicker({ index, onCanvas, onPick, title, hint, onClose }: P
         <div className="flex items-start justify-between gap-2">
           <h2 className="text-[13.5px] font-semibold">{title}</h2>
           {onClose && (
-            <button className="-mr-1 -mt-0.5 text-[var(--jd-faint)] hover:text-[var(--jd-text)]" onClick={onClose} title="Close (Esc)">
+            <button
+              className="-mr-1 -mt-0.5 text-[var(--jd-faint)] hover:text-[var(--jd-text)]"
+              onClick={onClose}
+              title={t('picker.close')}
+            >
               <X size={16} />
             </button>
           )}
         </div>
         <p className="mb-2.5 mt-0.5 text-[11.5px] leading-snug text-[var(--jd-muted)]">{hint}</p>
-        <SearchInput value={query} onChange={setQuery} placeholder="Find a class…" />
+        <SearchInput value={query} onChange={setQuery} placeholder={t('picker.search')} />
         {!query && (
           <div className="mt-2 flex rounded-lg border border-[var(--jd-border)] bg-[var(--jd-surface-2)] p-0.5">
-            <TabButton active={tab === 'classes'} onClick={() => setTab('classes')} icon={<Folder size={13} />} label="Packages" />
-            <TabButton active={tab === 'entryPoints'} onClick={() => setTab('entryPoints')} icon={<Zap size={13} />} label={`Entry points · ${entryPoints.length}`} />
+            <TabButton
+              active={tab === 'classes'}
+              onClick={() => setTab('classes')}
+              icon={<Folder size={13} />}
+              label={t('picker.packages')}
+            />
+            <TabButton
+              active={tab === 'entryPoints'}
+              onClick={() => setTab('entryPoints')}
+              icon={<Zap size={13} />}
+              label={t('picker.entryPoints', { count: entryPoints.length })}
+            />
           </div>
         )}
       </div>
@@ -79,14 +95,14 @@ export function ClassPicker({ index, onCanvas, onPick, title, hint, onClose }: P
       <div className="jd-scroll min-h-0 flex-1 overflow-y-auto px-2 py-2">
         {query ? (
           matches.length === 0 ? (
-            <Empty>No class matches “{query}”.</Empty>
+            <Empty>{t('picker.noMatch', { query })}</Empty>
           ) : (
             matches.map((t) => <ClassRow key={t.id} type={t} depth={0} onCanvas={onCanvas.has(t.id)} onPick={onPick} showPackage />)
           )
         ) : tab === 'classes' ? (
           tree.map((node) => <PackageRow key={node.name + node.label} node={node} depth={0} onCanvas={onCanvas} onPick={onPick} />)
         ) : entryPoints.length === 0 ? (
-          <Empty>No HTTP handlers, listeners, schedulers or main methods were detected.</Empty>
+          <Empty>{t('picker.noEntryPoints')}</Empty>
         ) : (
           entryPoints.map(({ method, owner }) => (
             <button key={method.id} className="jd-list-item items-start" onClick={() => onPick(owner!.id)} title={`${owner!.id}\n${method.signature}`}>
@@ -115,7 +131,7 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
   return (
     <button
       onClick={onClick}
-      className="flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1 text-[11.5px] font-medium transition"
+      className="flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1 text-[11.5px] font-medium transition"
       style={active ? { background: 'var(--jd-surface)', color: 'var(--jd-text)', boxShadow: 'var(--jd-shadow)' } : { color: 'var(--jd-muted)' }}
     >
       {icon}

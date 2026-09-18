@@ -4,8 +4,10 @@ import './styles.css'
 import { App } from './App'
 import { indexGraph, type GraphIndex } from './data/graphIndex'
 import { loadGraph } from './data/loadGraph'
+import { I18nProvider, useI18n } from './i18n/I18nProvider'
 
 function Root() {
+  const { t } = useI18n()
   const [index, setIndex] = useState<GraphIndex>()
   const [error, setError] = useState<string>()
 
@@ -19,7 +21,9 @@ function Root() {
   }, [])
 
   if (error) {
-    return <div className="grid h-full place-items-center text-[13px] text-red-600">Could not load graph: {error}</div>
+    return (
+      <div className="grid h-full place-items-center text-[13px] text-red-600">{t('notice.loadFailed', { error })}</div>
+    )
   }
   if (!index) return null
   return <App index={index} />
@@ -27,6 +31,8 @@ function Root() {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Root />
+    <I18nProvider>
+      <Root />
+    </I18nProvider>
   </StrictMode>,
 )

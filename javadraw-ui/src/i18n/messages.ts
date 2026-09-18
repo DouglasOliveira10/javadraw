@@ -1,0 +1,295 @@
+/**
+ * UI strings. English is the source of truth: its keys define the `MessageKey` type, so a new language
+ * cannot compile until every key has a translation.
+ *
+ * Adding a language:
+ *  1. write a `Record<MessageKey, string>` below, next to `ptBR`;
+ *  2. register it in `MESSAGES` and in `LOCALES` (code, native label and the two-letter button label).
+ *
+ * Counted strings come in pairs suffixed `_one` / `_other` and are read through `tc(key, count)`.
+ * Placeholders look like `{name}` and are filled by `t(key, { name })`.
+ */
+export const en = {
+  'app.diagramMenu': 'Diagram menu',
+  'app.toggleTheme': 'Toggle theme',
+  'app.language': 'Language',
+  'app.typesAnalyzed_one': '{count} type analyzed',
+  'app.typesAnalyzed_other': '{count} types analyzed',
+  'app.cards_one': '{count} card',
+  'app.cards_other': '{count} cards',
+  'app.relations_one': '{count} relation',
+  'app.relations_other': '{count} relations',
+
+  'menu.addClass': 'Add class',
+  'menu.hideClassPicker': 'Hide class picker',
+  'menu.addClassHint': 'Add a class that has no relation with the diagram',
+  'menu.clearDiagram': 'Clear diagram',
+  'menu.clearConfirm': 'Click again to confirm',
+  'menu.save': 'Save',
+  'menu.import': 'Import…',
+  'menu.importHint': 'Import a diagram JSON',
+  'menu.exportAs': 'Export as',
+  'menu.exporting': 'Exporting…',
+  'menu.exportPng': 'Export the diagram as PNG',
+  'menu.saveHint': 'Save the diagram as JSON',
+  'menu.colors': 'Colors',
+  'menu.showFieldTypes': 'Show field types',
+  'menu.showParameters': 'Show parameters',
+  'menu.showReturnTypes': 'Show return types',
+  'menu.showMinimap': 'Show minimap',
+  'menu.autoArrange': 'Auto-arrange',
+  'menu.autoArrangeHint': 'Rearrange every card with ELK',
+
+  'colors.hint': 'A stereotype wins over the kind, so a @Service class takes the service colour.',
+  'colors.stereotypes': 'Stereotypes',
+  'colors.kinds': 'Kinds',
+  'colors.reset': 'Reset to defaults',
+  'colors.pickerLabel': 'Colour for {name}',
+
+  'picker.startTitle': 'Start from a class',
+  'picker.startHint': 'Pick the class you want to explore. From there you grow the diagram one relation at a time.',
+  'picker.addTitle': 'Add a class',
+  'picker.addHint': 'The class is added loose; relate it through the panel on the right.',
+  'picker.search': 'Find a class…',
+  'picker.close': 'Close (Esc)',
+  'picker.packages': 'Packages',
+  'picker.entryPoints': 'Entry points · {count}',
+  'picker.noMatch': 'No class matches “{query}”.',
+  'picker.noEntryPoints': 'No HTTP handlers, listeners, schedulers or main methods were detected.',
+  'picker.matches_one': '{count} match',
+  'picker.matches_other': '{count} matches',
+
+  'canvas.emptyTitle': 'Empty diagram',
+  'canvas.emptyHint':
+    'Choose a class on the left. Every card you add afterwards comes from a relation that exists in the analyzed bytecode.',
+  'card.membersHidden_one': '{count} member hidden',
+  'card.membersHidden_other': '{count} members hidden',
+
+  'inspector.selected': 'Selected',
+  'inspector.close': 'Close',
+  'inspector.library': 'library',
+  'inspector.removeFromDiagram': 'Remove from diagram',
+  'inspector.removeHint': 'Remove this card from the diagram',
+  'inspector.locked': 'Locked by {count} relations',
+  'inspector.lockedHint': 'Holds {count} relations; remove the other ones first',
+  'inspector.resetSize': 'Reset size',
+  'inspector.resetSizeHint': 'Size the card by its content again',
+  'inspector.hierarchy': 'Hierarchy',
+  'inspector.fields': 'Fields',
+  'inspector.methods': 'Methods',
+  'inspector.uses': 'Uses',
+  'inspector.usedBy': 'Used by',
+  'inspector.annotations': 'Annotations',
+  'inspector.onCanvas': 'on canvas',
+  'inspector.addToDiagram': 'Add to the diagram',
+  'inspector.addAndLink': 'Add {name} and link it',
+  'inspector.showOnCard': 'Show on the card',
+  'inspector.hideOnCard': 'Hide on the card',
+  'inspector.showAllOnCard': 'Show all on the card',
+  'inspector.hideAllOnCard': 'Hide all on the card',
+  'inspector.extends': 'extends',
+  'inspector.implements': 'implements',
+  'inspector.extendedBy': 'extended by',
+  'inspector.implementedBy': 'implemented by',
+  'inspector.usesCaption': 'uses',
+  'inspector.fieldCaption': 'field',
+
+  'selection.title': '{count} cards selected',
+  'selection.clear': 'Clear selection',
+  'selection.align': 'Align',
+  'selection.alignLeft': 'Align left',
+  'selection.alignCenter': 'Align center',
+  'selection.alignRight': 'Align right',
+  'selection.alignTop': 'Align top',
+  'selection.alignMiddle': 'Align middle',
+  'selection.alignBottom': 'Align bottom',
+  'selection.distributeHorizontally': 'Distribute horizontally (needs 3 cards)',
+  'selection.distributeVertically': 'Distribute vertically (needs 3 cards)',
+  'selection.autoArrange': 'Auto-arrange selection',
+  'selection.autoArrangeHint': 'Run ELK on the selected cards only',
+  'selection.hideMembers': 'Hide members',
+  'selection.showMembers': 'Show members',
+  'selection.hideMembersHint': 'Collapse the selected cards',
+  'selection.showMembersHint': 'Show every field and method',
+  'selection.remove': 'Remove {removable} of {total}',
+  'selection.removeLocked': 'Locked by relations',
+  'selection.removeHint': 'Remove the selected cards',
+  'selection.removePartialHint': '{count} of them still hold two or more relations',
+  'selection.keepsNote': 'Cards that still hold two or more relations stay; remove their neighbors first.',
+  'selection.list': 'Selected',
+  'selection.lockedTag': 'locked',
+
+  'notice.cardsKept_one': '{count} card kept: it still holds two or more relations.',
+  'notice.cardsKept_other': '{count} cards kept: they still hold two or more relations.',
+  'notice.cardsDropped': '{count} card(s) removed ({names}): the classes are no longer in the project',
+  'notice.relationsDropped': '{count} relation(s) removed: they no longer exist in the bytecode',
+  'notice.loadFailed': 'Could not load graph: {error}',
+
+  'kind.CLASS': 'class',
+  'kind.INTERFACE': 'interface',
+  'kind.ENUM': 'enum',
+  'kind.RECORD': 'record',
+  'kind.ANNOTATION': 'annotation',
+  'kind.abstract': 'abstract {kind}',
+
+  'visibility.PUBLIC': 'public',
+  'visibility.PROTECTED': 'protected',
+  'visibility.PACKAGE': 'package',
+  'visibility.PRIVATE': 'private',
+} as const
+
+export type MessageKey = keyof typeof en
+
+export const ptBR: Record<MessageKey, string> = {
+  'app.diagramMenu': 'Menu do diagrama',
+  'app.toggleTheme': 'Alternar tema',
+  'app.language': 'Idioma',
+  'app.typesAnalyzed_one': '{count} tipo analisado',
+  'app.typesAnalyzed_other': '{count} tipos analisados',
+  'app.cards_one': '{count} cartão',
+  'app.cards_other': '{count} cartões',
+  'app.relations_one': '{count} relação',
+  'app.relations_other': '{count} relações',
+
+  'menu.addClass': 'Adicionar classe',
+  'menu.hideClassPicker': 'Esconder o seletor de classes',
+  'menu.addClassHint': 'Adiciona uma classe sem relação com o diagrama',
+  'menu.clearDiagram': 'Limpar diagrama',
+  'menu.clearConfirm': 'Clique de novo para confirmar',
+  'menu.save': 'Salvar',
+  'menu.import': 'Importar…',
+  'menu.importHint': 'Importar um diagrama em JSON',
+  'menu.exportAs': 'Exportar como',
+  'menu.exporting': 'Exportando…',
+  'menu.exportPng': 'Exportar o diagrama em PNG',
+  'menu.saveHint': 'Salvar o diagrama em JSON',
+  'menu.colors': 'Cores',
+  'menu.showFieldTypes': 'Mostrar tipos dos campos',
+  'menu.showParameters': 'Mostrar parâmetros',
+  'menu.showReturnTypes': 'Mostrar retornos',
+  'menu.showMinimap': 'Mostrar minimapa',
+  'menu.autoArrange': 'Organizar automaticamente',
+  'menu.autoArrangeHint': 'Reposiciona todos os cartões com o ELK',
+
+  'colors.hint': 'O estereótipo vence o tipo: uma classe @Service fica com a cor de service.',
+  'colors.stereotypes': 'Estereótipos',
+  'colors.kinds': 'Tipos',
+  'colors.reset': 'Voltar ao padrão',
+  'colors.pickerLabel': 'Cor de {name}',
+
+  'picker.startTitle': 'Comece por uma classe',
+  'picker.startHint': 'Escolha a classe que quer explorar. Dali você cresce o diagrama uma relação por vez.',
+  'picker.addTitle': 'Adicionar uma classe',
+  'picker.addHint': 'A classe entra solta; relacione pelo painel da direita.',
+  'picker.search': 'Buscar uma classe…',
+  'picker.close': 'Fechar (Esc)',
+  'picker.packages': 'Pacotes',
+  'picker.entryPoints': 'Entradas · {count}',
+  'picker.noMatch': 'Nenhuma classe corresponde a “{query}”.',
+  'picker.noEntryPoints': 'Nenhum endpoint HTTP, listener, agendador ou método main foi encontrado.',
+  'picker.matches_one': '{count} resultado',
+  'picker.matches_other': '{count} resultados',
+
+  'canvas.emptyTitle': 'Diagrama vazio',
+  'canvas.emptyHint':
+    'Escolha uma classe à esquerda. Cada cartão que você adicionar depois vem de uma relação que existe no bytecode analisado.',
+  'card.membersHidden_one': '{count} membro escondido',
+  'card.membersHidden_other': '{count} membros escondidos',
+
+  'inspector.selected': 'Selecionado',
+  'inspector.close': 'Fechar',
+  'inspector.library': 'biblioteca',
+  'inspector.removeFromDiagram': 'Remover do diagrama',
+  'inspector.removeHint': 'Remove este cartão do diagrama',
+  'inspector.locked': 'Travado por {count} relações',
+  'inspector.lockedHint': 'Sustenta {count} relações; remova as outras primeiro',
+  'inspector.resetSize': 'Tamanho automático',
+  'inspector.resetSizeHint': 'Voltar a dimensionar o cartão pelo conteúdo',
+  'inspector.hierarchy': 'Hierarquia',
+  'inspector.fields': 'Campos',
+  'inspector.methods': 'Métodos',
+  'inspector.uses': 'Usa',
+  'inspector.usedBy': 'Usado por',
+  'inspector.annotations': 'Anotações',
+  'inspector.onCanvas': 'no diagrama',
+  'inspector.addToDiagram': 'Adicionar ao diagrama',
+  'inspector.addAndLink': 'Adicionar {name} e ligar',
+  'inspector.showOnCard': 'Mostrar no cartão',
+  'inspector.hideOnCard': 'Esconder no cartão',
+  'inspector.showAllOnCard': 'Mostrar tudo no cartão',
+  'inspector.hideAllOnCard': 'Esconder tudo no cartão',
+  'inspector.extends': 'estende',
+  'inspector.implements': 'implementa',
+  'inspector.extendedBy': 'estendida por',
+  'inspector.implementedBy': 'implementada por',
+  'inspector.usesCaption': 'usa',
+  'inspector.fieldCaption': 'campo',
+
+  'selection.title': '{count} cartões selecionados',
+  'selection.clear': 'Limpar seleção',
+  'selection.align': 'Alinhar',
+  'selection.alignLeft': 'Alinhar à esquerda',
+  'selection.alignCenter': 'Centralizar na horizontal',
+  'selection.alignRight': 'Alinhar à direita',
+  'selection.alignTop': 'Alinhar ao topo',
+  'selection.alignMiddle': 'Centralizar na vertical',
+  'selection.alignBottom': 'Alinhar à base',
+  'selection.distributeHorizontally': 'Distribuir na horizontal (precisa de 3 cartões)',
+  'selection.distributeVertically': 'Distribuir na vertical (precisa de 3 cartões)',
+  'selection.autoArrange': 'Organizar a seleção',
+  'selection.autoArrangeHint': 'Roda o ELK só nos cartões selecionados',
+  'selection.hideMembers': 'Esconder membros',
+  'selection.showMembers': 'Mostrar membros',
+  'selection.hideMembersHint': 'Recolher os cartões selecionados',
+  'selection.showMembersHint': 'Mostrar todos os campos e métodos',
+  'selection.remove': 'Remover {removable} de {total}',
+  'selection.removeLocked': 'Travados por relações',
+  'selection.removeHint': 'Remover os cartões selecionados',
+  'selection.removePartialHint': '{count} deles ainda sustentam duas ou mais relações',
+  'selection.keepsNote': 'Cartões que ainda sustentam duas ou mais relações ficam; remova os vizinhos primeiro.',
+  'selection.list': 'Selecionados',
+  'selection.lockedTag': 'travado',
+
+  'notice.cardsKept_one': '{count} cartão mantido: ainda sustenta duas ou mais relações.',
+  'notice.cardsKept_other': '{count} cartões mantidos: ainda sustentam duas ou mais relações.',
+  'notice.cardsDropped': '{count} cartão(ões) removido(s) ({names}): as classes não estão mais no projeto',
+  'notice.relationsDropped': '{count} relação(ões) removida(s): não existem mais no bytecode',
+  'notice.loadFailed': 'Não foi possível carregar o grafo: {error}',
+
+  'kind.CLASS': 'classe',
+  'kind.INTERFACE': 'interface',
+  'kind.ENUM': 'enum',
+  'kind.RECORD': 'record',
+  'kind.ANNOTATION': 'anotação',
+  'kind.abstract': '{kind} abstrata',
+
+  'visibility.PUBLIC': 'público',
+  'visibility.PROTECTED': 'protegido',
+  'visibility.PACKAGE': 'pacote',
+  'visibility.PRIVATE': 'privado',
+}
+
+export type Locale = 'en' | 'pt-BR'
+
+export const MESSAGES: Record<Locale, Record<MessageKey, string>> = { en, 'pt-BR': ptBR }
+
+/** Native label plus the short form used on the toolbar button. */
+export const LOCALES: { code: Locale; label: string; short: string }[] = [
+  { code: 'en', label: 'English', short: 'EN' },
+  { code: 'pt-BR', label: 'Português (Brasil)', short: 'PT' },
+]
+
+/** Picks the closest supported language, falling back to English. */
+export function detectLocale(preferred: readonly string[]): Locale {
+  for (const language of preferred) {
+    const tag = language.toLowerCase()
+    if (tag.startsWith('pt')) return 'pt-BR'
+    if (tag.startsWith('en')) return 'en'
+  }
+  return 'en'
+}
+
+export function format(template: string, values?: Record<string, string | number>): string {
+  if (!values) return template
+  return template.replace(/\{(\w+)\}/g, (match, name: string) => (name in values ? String(values[name]) : match))
+}

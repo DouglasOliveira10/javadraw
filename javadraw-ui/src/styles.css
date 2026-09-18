@@ -277,6 +277,12 @@ body {
   box-shadow: var(--jd-shadow-lg);
 }
 
+/* For a trigger near the right edge, so the popover grows inwards. */
+.jd-menu-right {
+  left: auto;
+  right: 0;
+}
+
 .jd-submenu {
   top: -5px;
   left: calc(100% + 2px);
@@ -294,6 +300,8 @@ body {
   color: var(--jd-text);
   cursor: pointer;
   text-align: left;
+  /* The menu widens to its longest label instead of wrapping it — labels grow with the language. */
+  white-space: nowrap;
 }
 
 .jd-menu-item:hover:not(:disabled) {
