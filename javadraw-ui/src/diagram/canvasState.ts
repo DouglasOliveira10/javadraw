@@ -43,6 +43,7 @@ export type CanvasAction =
   /** First card of an empty canvas, or a card with no relation to what is already there. */
   | { type: 'addType'; typeId: string; position?: XY }
   | { type: 'addRelation'; relation: Relation; position?: XY }
+  /** No UI creates these today (method-to-method edges are disabled); saved diagrams still carry them. */
   | { type: 'addCall'; call: CallEdge; position?: XY }
   | { type: 'removeNode'; typeId: string }
   | { type: 'toggleField'; typeId: string; field: string; visible?: boolean }

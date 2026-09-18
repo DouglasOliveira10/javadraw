@@ -1,10 +1,10 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { ArrowRight, ChevronRight, Eye, EyeOff, Plus, Trash2, X } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Eye, EyeOff, Plus, Trash2, X } from 'lucide-react'
 import type { GraphIndex } from '../data/graphIndex'
-import type { CallEdge, MethodInfo, Relation } from '../data/types'
+import type { Relation } from '../data/types'
 import { parameterTypes } from '../data/format'
 import { EndpointBadge, KindBadge, StereotypePill, VisibilityGlyph } from '../components/Badges'
-import { canRemove, edgesOf, relationEdgeId, callEdgeId, type CanvasState } from './canvasState'
+import { canRemove, edgesOf, relationEdgeId, type CanvasState } from './canvasState'
 import { nextSectionValue, visibilityOf, type Visibility } from './members'
 
 interface Props {
@@ -14,7 +14,6 @@ interface Props {
   onClose: () => void
   onSelect: (typeId: string) => void
   onAddRelation: (relation: Relation, origin: string) => void
-  onAddCall: (call: CallEdge, origin: string) => void
   onToggleField: (typeId: string, field: string) => void
   onToggleMethod: (typeId: string, methodId: string) => void
   /** Reveals or hides a whole section of the card at once. */
@@ -29,7 +28,6 @@ export function Inspector({
   onClose,
   onSelect,
   onAddRelation,
-  onAddCall,
   onToggleField,
   onToggleMethod,
   onToggleSection,
@@ -151,16 +149,14 @@ export function Inspector({
             }
           >
             {members.map((m) => (
-              <MethodRow
-                key={m.id}
-                index={index}
-                state={state}
-                method={m}
-                visible={node.visibleMethods.includes(m.id)}
-                onToggle={() => onToggleMethod(typeId, m.id)}
-                onAddCall={(call) => onAddCall(call, typeId)}
-                onSelect={onSelect}
-              />
+              <MemberRow key={m.id} visible={node.visibleMethods.includes(m.id)} onToggle={() => onToggleMethod(typeId, m.id)}>
+                <VisibilityGlyph visibility={m.visibility} />
+                <span className="min-w-0 flex-1 truncate">
+                  {m.name}
+                  <span className="text-[var(--jd-muted)]">({parameterTypes(m)})</span>
+                </span>
+                {m.endpoint && <EndpointBadge endpoint={m.endpoint} compact />}
+              </MemberRow>
             ))}
           </Section>
         )}
@@ -319,103 +315,5 @@ function RelationRow({
       </button>
       {linked ? <span className="pr-1 text-[10px] text-[var(--jd-faint)]">on canvas</span> : <AddButton onClick={onAdd} />}
     </div>
-  )
-}
-
-function MethodRow({
-  index,
-  state,
-  method,
-  visible,
-  onToggle,
-  onAddCall,
-  onSelect,
-}: {
-  index: GraphIndex
-  state: CanvasState
-  method: MethodInfo
-  visible: boolean
-  onToggle: () => void
-  onAddCall: (call: CallEdge) => void
-  onSelect: (id: string) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const calls = useMemo(
-    () => ({ out: index.outgoing.get(method.id) ?? [], in: index.incoming.get(method.id) ?? [] }),
-    [index, method.id],
-  )
-  const total = calls.out.length + calls.in.length
-
-  return (
-    <div>
-      <MemberRow visible={visible} onToggle={onToggle}>
-        <VisibilityGlyph visibility={method.visibility} />
-        <span className="min-w-0 flex-1 truncate">
-          {method.name}
-          <span className="text-[var(--jd-muted)]">({parameterTypes(method)})</span>
-        </span>
-        {method.endpoint && <EndpointBadge endpoint={method.endpoint} compact />}
-        {total > 0 && (
-          <button
-            className="flex shrink-0 items-center text-[10px] text-[var(--jd-faint)] hover:text-[var(--jd-accent)]"
-            onClick={() => setOpen(!open)}
-            title="Calls of this method"
-          >
-            <ChevronRight size={11} className="transition-transform" style={{ transform: open ? 'rotate(90deg)' : undefined }} />
-            {total}
-          </button>
-        )}
-      </MemberRow>
-
-      {open && (
-        <div className="mb-1 ml-5 border-l border-[var(--jd-border)] pl-2">
-          <CallList title="calls" calls={calls.out} side="target" index={index} state={state} onAdd={onAddCall} onSelect={onSelect} />
-          <CallList title="called by" calls={calls.in} side="source" index={index} state={state} onAdd={onAddCall} onSelect={onSelect} />
-        </div>
-      )}
-    </div>
-  )
-}
-
-function CallList({
-  title,
-  calls,
-  side,
-  index,
-  state,
-  onAdd,
-  onSelect,
-}: {
-  title: string
-  calls: CallEdge[]
-  side: 'source' | 'target'
-  index: GraphIndex
-  state: CanvasState
-  onAdd: (call: CallEdge) => void
-  onSelect: (id: string) => void
-}) {
-  if (calls.length === 0) return null
-  return (
-    <>
-      <div className="mt-1 text-[10px] uppercase tracking-wide text-[var(--jd-faint)]">{title}</div>
-      {calls.map((call) => {
-        const other = index.methods.get(call[side])
-        const owner = index.ownerOf.get(call[side])
-        const linked = onCanvas(state, callEdgeId(call))
-        return (
-          <div
-            key={call.source + call.target}
-            className={`flex items-center gap-1.5 rounded px-1 py-0.5 font-mono text-[11px] hover:bg-[var(--jd-surface-2)] ${linked ? 'opacity-60' : ''}`}
-          >
-            <ArrowRight size={11} className={`shrink-0 text-[var(--jd-faint)] ${side === 'source' ? 'rotate-180' : ''}`} />
-            <button className="min-w-0 flex-1 truncate text-left hover:text-[var(--jd-accent)]" onClick={() => owner && onSelect(owner.id)}>
-              <span className="text-[var(--jd-muted)]">{owner?.name}.</span>
-              {other?.name}
-            </button>
-            {linked ? <span className="pr-1 text-[10px] text-[var(--jd-faint)]">on canvas</span> : <AddButton onClick={() => onAdd(call)} />}
-          </div>
-        )
-      })}
-    </>
   )
 }

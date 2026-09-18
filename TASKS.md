@@ -10,4 +10,4 @@
 - [ ] 8 - deixar o usuario mover as arestas/ edge (ver se da pra melhor a qualidade visual)
 - [x] 9 - o exportar png nao ta renderizando as arestas
 - [ ] 10 - Exporta as mermaid
-- [ ] 11 - validar methods -> calls (ver se faz sentido manter isso, pq ta edges estranhas) se eu usar used by junto cria duas edges, travando a exclusao
+- [x] 11 - validar methods -> calls (ver se faz sentido manter isso, pq ta edges estranhas) se eu usar used by junto cria duas edges, travando a exclusao — resolvido desabilitando a criacao de edge metodo->metodo; o modelo segue suportando, sem UI para criar

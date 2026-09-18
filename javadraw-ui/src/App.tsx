@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
 import { Download, ImageDown, LayoutGrid, Map, Menu as MenuIcon, Moon, Plus, Save, Sun, Trash2, Upload, X } from 'lucide-react'
 import type { GraphIndex } from './data/graphIndex'
-import type { CallEdge, Relation } from './data/types'
+import type { Relation } from './data/types'
 import { pluralize } from './data/format'
 import { arrangePositions } from './layout/arrange'
 import { Canvas, useExportPng } from './diagram/Canvas'
@@ -12,7 +12,7 @@ import { ClassPicker } from './diagram/ClassPicker'
 import { Inspector } from './diagram/Inspector'
 import { SelectionPanel } from './diagram/SelectionPanel'
 import { toReactFlowEdges, toReactFlowNodes } from './diagram/toReactFlow'
-import { removeCascading, typeOfMethod, type XY } from './diagram/canvasState'
+import { removeCascading, type XY } from './diagram/canvasState'
 import { alignPositions, distributePositions, keepTopLeft, type Alignment, type Axis } from './diagram/align'
 import { useCanvas } from './diagram/useCanvas'
 import type { PruneResult } from './diagram/prune'
@@ -87,16 +87,6 @@ function Workspace({ index }: { index: GraphIndex }) {
     (relation: Relation, origin: string) => {
       const other = relation.source === origin ? relation.target : relation.source
       dispatch({ type: 'addRelation', relation, position: placeNear(origin, other, relation.kind, relation.source === origin) })
-      setSelectedIds([other])
-    },
-    [dispatch, placeNear],
-  )
-
-  const addCall = useCallback(
-    (call: CallEdge, origin: string) => {
-      const source = typeOfMethod(call.source)
-      const other = source === origin ? typeOfMethod(call.target) : source
-      dispatch({ type: 'addCall', call, position: placeNear(origin, other, 'CALL', source === origin) })
       setSelectedIds([other])
     },
     [dispatch, placeNear],
@@ -309,7 +299,6 @@ function Workspace({ index }: { index: GraphIndex }) {
             onClose={() => setSelectedIds([])}
             onSelect={(id) => onCanvas.has(id) && setSelectedIds([id])}
             onAddRelation={addRelation}
-            onAddCall={addCall}
             onToggleField={(typeId, field) => dispatch({ type: 'toggleField', typeId, field })}
             onToggleMethod={(typeId, methodId) => dispatch({ type: 'toggleMethod', typeId, methodId })}
             onToggleSection={toggleSection}
