@@ -71,6 +71,11 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
     })
   }, [nodes, selectedIds, initialized, getNode, setRfNodes])
 
+  /** Double click frames the card, so a crowded diagram can be read one card at a time. */
+  const onNodeDoubleClick: NodeMouseHandler = (_, node) => {
+    void fitView({ nodes: [{ id: node.id }], padding: 0.25, maxZoom: 2, duration: 400 })
+  }
+
   const onNodeClick: NodeMouseHandler = (event, node) => {
     onSelectionChange(event.shiftKey || event.metaKey ? toggleId(selectedIds, node.id) : [node.id])
   }
@@ -111,6 +116,7 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
           multiSelectionKeyCode={['Meta', 'Shift']}
           onSelectionChange={handleSelectionChange}
           onNodeClick={onNodeClick}
+          onNodeDoubleClick={onNodeDoubleClick}
           onPaneClick={() => onSelectionChange([])}
           onNodeDragStop={(_, node, dragged) => persistPositions(dragged.length > 0 ? dragged : [node])}
           onSelectionDragStop={(_, dragged) => persistPositions(dragged)}
