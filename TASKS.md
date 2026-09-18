@@ -8,6 +8,6 @@
 - [ ] 6 - Criar menu para selecionar a cor dos tipos (Ex: se for class vermelho, se for interface verde etc, deixar usuario escolher a cor)
 - [ ] 7 - ver a possibilidade de dar resize no card, porque hoje muito texto nao aparece completo.
 - [ ] 8 - deixar o usuario mover as arestas/ edge (ver se da pra melhor a qualidade visual)
-- [ ] 9 - o exportar png nao ta renderizando as arestas
+- [x] 9 - o exportar png nao ta renderizando as arestas
 - [ ] 10 - Exporta as mermaid
 - [ ] 11 - validar methods -> calls (ver se faz sentido manter isso, pq ta edges estranhas) se eu usar used by junto cria duas edges, travando a exclusao

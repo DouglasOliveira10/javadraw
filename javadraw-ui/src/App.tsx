@@ -203,7 +203,9 @@ function Workspace({ index }: { index: GraphIndex }) {
           onClear={() => dispatch({ type: 'clear' })}
           onSave={() => downloadJson(`${project}-diagram`, exportJson())}
           onImport={() => importInput.current?.click()}
-          onExportPng={exportPng}
+          onExportPng={() => {
+            void exportPng().catch((failure: unknown) => setError(failure instanceof Error ? failure.message : String(failure)))
+          }}
           exporting={exportingPng}
           onToggleMinimap={setShowMinimap}
           onAutoArrange={autoArrange}

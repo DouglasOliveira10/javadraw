@@ -43,3 +43,20 @@ export const VERB_COLORS: Record<HttpVerb, string> = {
   DELETE: '#ef4444',
   OTHER: '#64748b',
 }
+
+/**
+ * Edge colours as plain values. They must not come from CSS variables: PNG export serializes the SVG
+ * without the document stylesheet, so anything styled by class alone comes out invisible.
+ */
+export interface EdgePalette {
+  stroke: string
+  muted: string
+  accent: string
+  surface: string
+}
+
+export function edgePalette(dark: boolean): EdgePalette {
+  return dark
+    ? { stroke: '#7c8494', muted: '#4a5060', accent: '#8b7fff', surface: '#151821' }
+    : { stroke: '#8a91a0', muted: '#b7bcc6', accent: '#6d5dfc', surface: '#ffffff' }
+}

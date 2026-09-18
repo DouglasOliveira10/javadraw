@@ -24,6 +24,7 @@ import type { XY } from './canvasState'
 import { CanvasCard } from './CanvasCard'
 import { RelationEdge } from './RelationEdge'
 import { EdgeMarkers } from './EdgeMarkers'
+import { EdgeThemeProvider } from './EdgeTheme'
 
 const nodeTypes = { card: CanvasCard }
 const edgeTypes = { relation: RelationEdge }
@@ -82,40 +83,42 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
   }
 
   return (
-    <div className={`h-full w-full ${panning ? 'jd-panning' : ''}`} onContextMenu={(e) => e.preventDefault()}>
-      <ReactFlow
-        nodes={rfNodes}
-        onNodesChange={onNodesChange}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        colorMode={dark ? 'dark' : 'light'}
-        minZoom={0.1}
-        maxZoom={2.5}
-        nodesConnectable={false}
-        deleteKeyCode={null}
-        elevateNodesOnSelect={false}
-        proOptions={{ hideAttribution: true }}
-        panOnDrag={PAN_BUTTONS}
-        panActivationKeyCode="Space"
-        selectionOnDrag
-        selectionMode={SelectionMode.Partial}
-        selectionKeyCode={null}
-        multiSelectionKeyCode={['Meta', 'Shift']}
-        onSelectionChange={handleSelectionChange}
-        onNodeClick={onNodeClick}
-        onPaneClick={() => onSelectionChange([])}
-        onNodeDragStop={(_, node, dragged) => persistPositions(dragged.length > 0 ? dragged : [node])}
-        onSelectionDragStop={(_, dragged) => persistPositions(dragged)}
-      >
-        <ViewportPortal>
-          <EdgeMarkers />
-        </ViewportPortal>
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} />
-        <Controls showInteractive={false} position="bottom-left" />
-        {showMinimap && <MiniMap pannable zoomable position="bottom-right" nodeBorderRadius={6} nodeColor={minimapColor} />}
-      </ReactFlow>
-    </div>
+    <EdgeThemeProvider dark={dark}>
+      <div className={`h-full w-full ${panning ? 'jd-panning' : ''}`} onContextMenu={(e) => e.preventDefault()}>
+        <ReactFlow
+          nodes={rfNodes}
+          onNodesChange={onNodesChange}
+          edges={edges}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          colorMode={dark ? 'dark' : 'light'}
+          minZoom={0.1}
+          maxZoom={2.5}
+          nodesConnectable={false}
+          deleteKeyCode={null}
+          elevateNodesOnSelect={false}
+          proOptions={{ hideAttribution: true }}
+          panOnDrag={PAN_BUTTONS}
+          panActivationKeyCode="Space"
+          selectionOnDrag
+          selectionMode={SelectionMode.Partial}
+          selectionKeyCode={null}
+          multiSelectionKeyCode={['Meta', 'Shift']}
+          onSelectionChange={handleSelectionChange}
+          onNodeClick={onNodeClick}
+          onPaneClick={() => onSelectionChange([])}
+          onNodeDragStop={(_, node, dragged) => persistPositions(dragged.length > 0 ? dragged : [node])}
+          onSelectionDragStop={(_, dragged) => persistPositions(dragged)}
+        >
+          <ViewportPortal>
+            <EdgeMarkers />
+          </ViewportPortal>
+          <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} />
+          <Controls showInteractive={false} position="bottom-left" />
+          {showMinimap && <MiniMap pannable zoomable position="bottom-right" nodeBorderRadius={6} nodeColor={minimapColor} />}
+        </ReactFlow>
+      </div>
+    </EdgeThemeProvider>
   )
 }
 

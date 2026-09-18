@@ -1,15 +1,22 @@
-/** SVG marker definitions shared by every edge; rendered once inside the React Flow viewport. */
+import { useEdgeTheme } from './EdgeTheme'
+
+/**
+ * SVG marker definitions shared by every edge, rendered once inside the React Flow viewport.
+ * Colours are attributes rather than CSS classes, otherwise the PNG export loses the arrow heads.
+ */
 export function EdgeMarkers() {
-  const variants: { suffix: string; className: string }[] = [
-    { suffix: '', className: '' },
-    { suffix: '-active', className: 'jd-marker-active' },
-    { suffix: '-muted', className: 'jd-marker-muted' },
+  const palette = useEdgeTheme()
+  const variants: { suffix: string; colour: string }[] = [
+    { suffix: '', colour: palette.stroke },
+    { suffix: '-active', colour: palette.accent },
+    { suffix: '-muted', colour: palette.muted },
   ]
+
   return (
     <svg style={{ position: 'absolute', width: 0, height: 0 }} aria-hidden>
       <defs>
-        {variants.map(({ suffix, className }) => (
-          <g key={suffix} className={className}>
+        {variants.map(({ suffix, colour }) => (
+          <g key={suffix}>
             <marker
               id={`jd-triangle${suffix}`}
               viewBox="0 0 20 20"
@@ -20,7 +27,7 @@ export function EdgeMarkers() {
               orient="auto-start-reverse"
               markerUnits="userSpaceOnUse"
             >
-              <path d="M 2 2 L 17 10 L 2 18 z" className="jd-marker-hollow" />
+              <path d="M 2 2 L 17 10 L 2 18 z" fill={palette.surface} stroke={colour} strokeWidth={1.4} />
             </marker>
             <marker
               id={`jd-arrow${suffix}`}
@@ -32,7 +39,7 @@ export function EdgeMarkers() {
               orient="auto-start-reverse"
               markerUnits="userSpaceOnUse"
             >
-              <path d="M 2 3 L 17 10 L 2 17 L 6 10 z" className="jd-marker-fill" />
+              <path d="M 2 3 L 17 10 L 2 17 L 6 10 z" fill={colour} />
             </marker>
             <marker
               id={`jd-open${suffix}`}
@@ -44,7 +51,7 @@ export function EdgeMarkers() {
               orient="auto-start-reverse"
               markerUnits="userSpaceOnUse"
             >
-              <path d="M 4 3 L 16 10 L 4 17" className="jd-marker-open" />
+              <path d="M 4 3 L 16 10 L 4 17" fill="none" stroke={colour} strokeWidth={1.4} strokeLinecap="round" strokeLinejoin="round" />
             </marker>
           </g>
         ))}

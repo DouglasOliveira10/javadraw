@@ -224,70 +224,7 @@ body {
 /* ------------------------------------------------------------------ Edges */
 
 .jd-edge {
-  fill: none;
-  stroke: var(--jd-edge);
-  stroke-width: 1.4;
   transition: stroke 160ms ease, opacity 160ms ease;
-}
-
-.jd-edge.jd-dashed {
-  stroke-dasharray: 6 4;
-}
-
-.jd-edge.jd-dotted {
-  stroke-dasharray: 2 4;
-  stroke-linecap: round;
-}
-
-.jd-edge.jd-muted {
-  stroke: var(--jd-edge-muted);
-}
-
-.jd-edge.jd-active {
-  stroke: var(--jd-accent);
-  stroke-width: 2;
-}
-
-.jd-edge.jd-animated {
-  stroke-dasharray: 6 4;
-  animation: jd-dash 0.6s linear infinite;
-}
-
-@keyframes jd-dash {
-  to {
-    stroke-dashoffset: -10;
-  }
-}
-
-.jd-marker-fill {
-  fill: var(--jd-edge);
-}
-
-.jd-marker-hollow {
-  fill: var(--jd-surface);
-  stroke: var(--jd-edge);
-  stroke-width: 1.4;
-}
-
-.jd-marker-open {
-  fill: none;
-  stroke: var(--jd-edge);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.jd-marker-muted .jd-marker-open {
-  stroke: var(--jd-edge-muted);
-}
-
-.jd-marker-active .jd-marker-fill {
-  fill: var(--jd-accent);
-}
-
-.jd-marker-active .jd-marker-hollow,
-.jd-marker-active .jd-marker-open {
-  stroke: var(--jd-accent);
 }
 
 .jd-edge-label {
@@ -301,29 +238,6 @@ body {
   color: var(--jd-muted);
   background: var(--jd-bg);
   white-space: nowrap;
-}
-
-.jd-edge-label.jd-active {
-  color: var(--jd-accent);
-}
-
-.jd-step {
-  position: absolute;
-  pointer-events: all;
-  display: grid;
-  place-items: center;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 4px;
-  border-radius: 999px;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--jd-surface);
-  background: var(--jd-edge);
-}
-
-.jd-step.jd-active {
-  background: var(--jd-accent);
 }
 
 /* ------------------------------------------------------------------ Menu */
