@@ -251,6 +251,7 @@ function Workspace({ index }: { index: GraphIndex }) {
               index={index}
               onCanvas={onCanvas}
               onPick={addType}
+              onClose={empty ? undefined : () => setPickerOpen(false)}
               title={empty ? 'Start from a class' : 'Add a class'}
               hint={
                 empty

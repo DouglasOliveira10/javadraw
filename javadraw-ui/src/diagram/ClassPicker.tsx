@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Check, ChevronRight, Folder, Zap } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Check, ChevronRight, Folder, X, Zap } from 'lucide-react'
 import type { GraphIndex } from '../data/graphIndex'
 import type { TypeInfo } from '../data/types'
 import { SearchInput } from '../components/Controls'
@@ -13,13 +13,27 @@ interface Props {
   onPick: (typeId: string) => void
   title: string
   hint: string
+  /** Closes the panel; absent while the canvas is empty, where picking a class is the only way forward. */
+  onClose?: () => void
 }
 
 type Tab = 'classes' | 'entryPoints'
 
-export function ClassPicker({ index, onCanvas, onPick, title, hint }: Props) {
+export function ClassPicker({ index, onCanvas, onPick, title, hint, onClose }: Props) {
   const [query, setQuery] = useState('')
   const [tab, setTab] = useState<Tab>('classes')
+
+  // Escape clears a search first, then closes the panel.
+  useEffect(() => {
+    if (!onClose) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return
+      if (query) setQuery('')
+      else onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onClose, query])
 
   const tree = useMemo(() => buildClassTree(index.graph.types), [index])
 
@@ -44,7 +58,14 @@ export function ClassPicker({ index, onCanvas, onPick, title, hint }: Props) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-[var(--jd-border)] px-4 pb-3 pt-3">
-        <h2 className="text-[13.5px] font-semibold">{title}</h2>
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-[13.5px] font-semibold">{title}</h2>
+          {onClose && (
+            <button className="-mr-1 -mt-0.5 text-[var(--jd-faint)] hover:text-[var(--jd-text)]" onClick={onClose} title="Close (Esc)">
+              <X size={16} />
+            </button>
+          )}
+        </div>
         <p className="mb-2.5 mt-0.5 text-[11.5px] leading-snug text-[var(--jd-muted)]">{hint}</p>
         <SearchInput value={query} onChange={setQuery} placeholder="Find a class…" />
         {!query && (
