@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
-import { Eye, EyeOff, Plus, Trash2, X } from 'lucide-react'
+import { Eye, EyeOff, Maximize2, Plus, Trash2, X } from 'lucide-react'
 import type { GraphIndex } from '../data/graphIndex'
-import type { Relation } from '../data/types'
-import { parameterTypes } from '../data/format'
+import type { MethodInfo, Relation } from '../data/types'
+import { parameterTypes, splitSignature } from '../data/format'
 import { EndpointBadge, KindBadge, StereotypePill, VisibilityGlyph } from '../components/Badges'
 import { canRemove, edgesOf, relationEdgeId, type CanvasState } from './canvasState'
 import { nextSectionValue, visibilityOf, type Visibility } from './members'
@@ -18,6 +18,11 @@ interface Props {
   onToggleMethod: (typeId: string, methodId: string) => void
   /** Reveals or hides a whole section of the card at once. */
   onToggleSection: (typeId: string, section: 'fields' | 'methods', visible: boolean) => void
+  /** Back to sizing by content, for a card the user resized. */
+  onAutoSize: (typeId: string) => void
+  showFieldTypes: boolean
+  showParameters: boolean
+  showReturnTypes: boolean
   onRemove: (typeId: string) => void
 }
 
@@ -31,6 +36,10 @@ export function Inspector({
   onToggleField,
   onToggleMethod,
   onToggleSection,
+  onAutoSize,
+  showFieldTypes,
+  showParameters,
+  showReturnTypes,
   onRemove,
 }: Props) {
   const type = index.types.get(typeId)
@@ -71,6 +80,11 @@ export function Inspector({
               </span>
             ))}
           </div>
+          {node.size && (
+            <button className="jd-btn mt-3 w-full justify-center" onClick={() => onAutoSize(typeId)} title="Size the card by its content again">
+              <Maximize2 size={14} /> Reset size
+            </button>
+          )}
           <button
             className="jd-btn mt-3 w-full justify-center"
             disabled={!removable}
@@ -124,11 +138,12 @@ export function Inspector({
                   onToggle={() => onToggleField(typeId, f.name)}
                   onAdd={relation && !onCanvas(state, relationEdgeId(relation)) ? () => onAddRelation(relation, typeId) : undefined}
                   addTitle={relation ? `Add ${shortName(relation.target)} and link it` : undefined}
+                  title={`${f.name}: ${f.type}`}
                 >
                   <VisibilityGlyph visibility={f.visibility} />
                   <span className="min-w-0 truncate">
                     {f.name}
-                    <span className="text-[var(--jd-muted)]">: {f.type}</span>
+                    {showFieldTypes && <span className="text-[var(--jd-muted)]">: {f.type}</span>}
                   </span>
                 </MemberRow>
               )
@@ -149,11 +164,13 @@ export function Inspector({
             }
           >
             {members.map((m) => (
-              <MemberRow key={m.id} visible={node.visibleMethods.includes(m.id)} onToggle={() => onToggleMethod(typeId, m.id)}>
+              <MemberRow key={m.id} visible={node.visibleMethods.includes(m.id)} onToggle={() => onToggleMethod(typeId, m.id)} title={m.signature}>
                 <VisibilityGlyph visibility={m.visibility} />
                 <span className="min-w-0 flex-1 truncate">
                   {m.name}
-                  <span className="text-[var(--jd-muted)]">({parameterTypes(m)})</span>
+                  <span className="text-[var(--jd-muted)]">
+                    ({showParameters ? parameterTypes(m) : ''}){showReturnTypes && returnTypeOf(m) ? `: ${returnTypeOf(m)}` : ''}
+                  </span>
                 </span>
                 {m.endpoint && <EndpointBadge endpoint={m.endpoint} compact />}
               </MemberRow>
@@ -239,6 +256,11 @@ function SectionEye({
   )
 }
 
+function returnTypeOf(method: MethodInfo): string | undefined {
+  const { returns } = splitSignature(method)
+  return returns && returns !== 'void' ? returns : undefined
+}
+
 function onCanvas(state: CanvasState, edgeId: string): boolean {
   return state.edges.some((e) => e.id === edgeId)
 }
@@ -252,16 +274,18 @@ function MemberRow({
   onToggle,
   onAdd,
   addTitle,
+  title,
   children,
 }: {
   visible: boolean
   onToggle: () => void
   onAdd?: () => void
   addTitle?: string
+  title?: string
   children: ReactNode
 }) {
   return (
-    <div className="flex items-center gap-1.5 rounded px-1 py-0.5 font-mono text-[11.5px] hover:bg-[var(--jd-surface-2)]">
+    <div className="flex items-center gap-1.5 rounded px-1 py-0.5 font-mono text-[11.5px] hover:bg-[var(--jd-surface-2)]" title={title}>
       <button
         className={visible ? 'text-[var(--jd-accent)]' : 'text-[var(--jd-faint)] hover:text-[var(--jd-text)]'}
         onClick={onToggle}

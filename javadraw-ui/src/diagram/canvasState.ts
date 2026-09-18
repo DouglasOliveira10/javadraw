@@ -6,9 +6,16 @@ export interface XY {
   y: number
 }
 
+export interface Size {
+  width: number
+  height: number
+}
+
 export interface CanvasNode {
   id: string
   position?: XY
+  /** Set once the user resizes the card; otherwise the card sizes itself to its content. */
+  size?: Size
   /** Field names revealed on the card. */
   visibleFields: string[]
   /** Method ids revealed on the card. */
@@ -49,6 +56,9 @@ export type CanvasAction =
   | { type: 'toggleField'; typeId: string; field: string; visible?: boolean }
   | { type: 'toggleMethod'; typeId: string; methodId: string; visible?: boolean }
   | { type: 'moveNode'; typeId: string; position: XY }
+  | { type: 'resizeNode'; typeId: string; size: Size }
+  /** Back to sizing itself by content. */
+  | { type: 'autoSizeNode'; typeId: string }
   | { type: 'setPositions'; positions: Record<string, XY> }
   /** Cascading removal: whatever is left holding two or more relations stays. */
   | { type: 'removeNodes'; typeIds: string[] }
@@ -153,6 +163,20 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
 
     case 'moveNode':
       return mapNode(state, action.typeId, (node) => ({ ...node, position: action.position }))
+
+    case 'resizeNode':
+      return mapNode(state, action.typeId, (node) =>
+        node.size?.width === action.size.width && node.size?.height === action.size.height
+          ? node
+          : { ...node, size: action.size },
+      )
+
+    case 'autoSizeNode':
+      return mapNode(state, action.typeId, (node) => {
+        if (!node.size) return node
+        const { size, ...rest } = node
+        return rest
+      })
 
     case 'setPositions':
       return {

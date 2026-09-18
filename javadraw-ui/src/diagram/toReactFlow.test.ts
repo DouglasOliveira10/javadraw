@@ -53,7 +53,7 @@ const state = (overrides: Partial<CanvasState> = {}): CanvasState => ({
 
 describe('toReactFlowNodes', () => {
   it('shows only the revealed members and counts the hidden ones', () => {
-    const [service, repo] = toReactFlowNodes(state(), index)
+    const [service, repo] = toReactFlowNodes(state(), index, { showFieldTypes: true, showParameters: true, showReturnTypes: true })
     expect(service.data.fields.map((f) => f.name)).toEqual(['repo'])
     expect(service.data.methods.map((m) => m.name)).toEqual(['place'])
     expect(repo.data.fields).toEqual([])

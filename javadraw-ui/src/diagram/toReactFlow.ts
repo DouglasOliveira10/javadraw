@@ -10,6 +10,18 @@ export interface CardData extends Record<string, unknown> {
   methods: MethodInfo[]
   /** Members hidden on the card but present on the type, shown as a "+N hidden" hint. */
   hiddenCount: number
+  /** Cards shrink to fit: field types, parameters and return types can each be left out. */
+  showFieldTypes: boolean
+  showParameters: boolean
+  showReturnTypes: boolean
+  /** The user resized this card, so it no longer sizes itself to its content. */
+  sized: boolean
+}
+
+export interface CardDisplay {
+  showFieldTypes: boolean
+  showParameters: boolean
+  showReturnTypes: boolean
 }
 
 export interface CanvasEdgeData extends Record<string, unknown> {
@@ -20,7 +32,7 @@ export interface CanvasEdgeData extends Record<string, unknown> {
 
 const ORIGIN: XY = { x: 0, y: 0 }
 
-export function toReactFlowNodes(state: CanvasState, index: GraphIndex): Node<CardData>[] {
+export function toReactFlowNodes(state: CanvasState, index: GraphIndex, display: CardDisplay): Node<CardData>[] {
   const nodes: Node<CardData>[] = []
   for (const node of state.nodes) {
     const type = index.types.get(node.id)
@@ -32,7 +44,17 @@ export function toReactFlowNodes(state: CanvasState, index: GraphIndex): Node<Ca
       id: node.id,
       type: 'card',
       position: node.position ?? ORIGIN,
-      data: { type, fields, methods, hiddenCount: total - fields.length - methods.length },
+      ...(node.size ? { width: node.size.width, height: node.size.height, style: node.size } : {}),
+      data: {
+        type,
+        fields,
+        methods,
+        hiddenCount: total - fields.length - methods.length,
+        showFieldTypes: display.showFieldTypes,
+        showParameters: display.showParameters,
+        showReturnTypes: display.showReturnTypes,
+        sized: !!node.size,
+      },
     })
   }
   return nodes

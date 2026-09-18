@@ -1,6 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ReactFlowProvider, useReactFlow } from '@xyflow/react'
-import { Download, ImageDown, LayoutGrid, Map, Menu as MenuIcon, Moon, Plus, Save, Sun, Trash2, Upload, X } from 'lucide-react'
+import {
+  CornerDownLeft,
+  Download,
+  ImageDown,
+  LayoutGrid,
+  Map,
+  Menu as MenuIcon,
+  Moon,
+  Parentheses,
+  Plus,
+  Save,
+  Sun,
+  Trash2,
+  Type,
+  Upload,
+  X,
+} from 'lucide-react'
 import type { GraphIndex } from './data/graphIndex'
 import type { Relation } from './data/types'
 import { pluralize } from './data/format'
@@ -31,6 +47,9 @@ function Workspace({ index }: { index: GraphIndex }) {
   const { state, dispatch, exportJson, importJson, restored } = useCanvas(index)
   const [dark, setDark] = useDarkMode()
   const [showMinimap, setShowMinimap] = useStoredFlag('javadraw.minimap', () => true)
+  const [showFieldTypes, setShowFieldTypes] = useStoredFlag('javadraw.fieldTypes', () => true)
+  const [showParameters, setShowParameters] = useStoredFlag('javadraw.parameters', () => true)
+  const [showReturnTypes, setShowReturnTypes] = useStoredFlag('javadraw.returnTypes', () => true)
   const { exportPng, busy: exportingPng } = useExportPng(`${project}-diagram`)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -38,7 +57,10 @@ function Workspace({ index }: { index: GraphIndex }) {
   const [error, setError] = useState<string | undefined>(() => describePruning(restored))
   const { getNodes, getNode, fitView } = useReactFlow()
 
-  const nodes = useMemo(() => toReactFlowNodes(state, index), [state, index])
+  const nodes = useMemo(
+    () => toReactFlowNodes(state, index, { showFieldTypes, showParameters, showReturnTypes }),
+    [state, index, showFieldTypes, showParameters, showReturnTypes],
+  )
   const edges = useMemo(() => toReactFlowEdges(state), [state])
   const onCanvas = useMemo(() => new Set(state.nodes.map((n) => n.id)), [state])
   const empty = state.nodes.length === 0
@@ -189,6 +211,12 @@ function Workspace({ index }: { index: GraphIndex }) {
           canArrange={state.nodes.length >= 2}
           pickerOpen={pickerOpen}
           showMinimap={showMinimap}
+          showFieldTypes={showFieldTypes}
+          showParameters={showParameters}
+          showReturnTypes={showReturnTypes}
+          onToggleFieldTypes={setShowFieldTypes}
+          onToggleParameters={setShowParameters}
+          onToggleReturnTypes={setShowReturnTypes}
           onAddClass={() => setPickerOpen((open) => !open)}
           onClear={() => dispatch({ type: 'clear' })}
           onSave={() => downloadJson(`${project}-diagram`, exportJson())}
@@ -273,6 +301,7 @@ function Workspace({ index }: { index: GraphIndex }) {
             showMinimap={showMinimap && !empty}
             onSelectionChange={selectionChanged}
             onMove={(positions) => dispatch({ type: 'setPositions', positions })}
+            onResize={(typeId, size) => dispatch({ type: 'resizeNode', typeId, size })}
           />
           {empty && <EmptyCanvas />}
         </main>
@@ -303,6 +332,10 @@ function Workspace({ index }: { index: GraphIndex }) {
             onToggleField={(typeId, field) => dispatch({ type: 'toggleField', typeId, field })}
             onToggleMethod={(typeId, methodId) => dispatch({ type: 'toggleMethod', typeId, methodId })}
             onToggleSection={toggleSection}
+            onAutoSize={(typeId) => dispatch({ type: 'autoSizeNode', typeId })}
+            showFieldTypes={showFieldTypes}
+            showParameters={showParameters}
+            showReturnTypes={showReturnTypes}
             onRemove={remove}
           />
         )}
@@ -353,6 +386,9 @@ interface MenuProps {
   canArrange: boolean
   pickerOpen: boolean
   showMinimap: boolean
+  showFieldTypes: boolean
+  showParameters: boolean
+  showReturnTypes: boolean
   exporting: boolean
   onAddClass: () => void
   onClear: () => void
@@ -360,6 +396,9 @@ interface MenuProps {
   onImport: () => void
   onExportPng: () => void
   onToggleMinimap: (value: boolean) => void
+  onToggleFieldTypes: (value: boolean) => void
+  onToggleParameters: (value: boolean) => void
+  onToggleReturnTypes: (value: boolean) => void
   onAutoArrange: () => void
 }
 
@@ -368,6 +407,9 @@ function DiagramMenu({
   canArrange,
   pickerOpen,
   showMinimap,
+  showFieldTypes,
+  showParameters,
+  showReturnTypes,
   exporting,
   onAddClass,
   onClear,
@@ -375,6 +417,9 @@ function DiagramMenu({
   onImport,
   onExportPng,
   onToggleMinimap,
+  onToggleFieldTypes,
+  onToggleParameters,
+  onToggleReturnTypes,
   onAutoArrange,
 }: MenuProps) {
   const [confirmingClear, setConfirmingClear] = useState(false)
@@ -403,6 +448,10 @@ function DiagramMenu({
       <MenuSubmenu icon={<Download size={14} />} label="Export as" disabled={empty}>
         <MenuItem icon={<ImageDown size={14} />} label={exporting ? 'Exporting…' : 'PNG'} disabled={exporting} onSelect={onExportPng} />
       </MenuSubmenu>
+      <MenuSeparator />
+      <MenuToggle icon={<Type size={14} />} label="Show field types" checked={showFieldTypes} onChange={onToggleFieldTypes} />
+      <MenuToggle icon={<Parentheses size={14} />} label="Show parameters" checked={showParameters} onChange={onToggleParameters} />
+      <MenuToggle icon={<CornerDownLeft size={14} />} label="Show return types" checked={showReturnTypes} onChange={onToggleReturnTypes} />
       <MenuSeparator />
       <MenuToggle icon={<Map size={14} />} label="Show minimap" checked={showMinimap} onChange={onToggleMinimap} />
       <MenuItem icon={<LayoutGrid size={14} />} label="Auto-arrange" disabled={!canArrange} onSelect={onAutoArrange} />

@@ -144,6 +144,13 @@ body {
   transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
+/* Once resized by hand the card fills the size React Flow keeps for the node. */
+.jd-card-sized {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
 .jd-card::before {
   content: '';
   display: block;
@@ -180,6 +187,7 @@ body {
   font-size: 11.5px;
   line-height: 18px;
   white-space: nowrap;
+  overflow: hidden;
   color: var(--jd-text);
 }
 
@@ -219,6 +227,20 @@ body {
   border-color: color-mix(in srgb, var(--accent) 40%, var(--jd-border));
   background: color-mix(in srgb, var(--accent) 5%, var(--jd-surface));
   box-shadow: var(--jd-shadow);
+}
+
+/* Resize handles, only while the card is selected. */
+.jd-resize-line {
+  border-color: var(--accent, var(--jd-accent));
+  border-width: 1px;
+}
+
+.jd-resize-handle {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid var(--jd-surface);
+  background: var(--accent, var(--jd-accent));
 }
 
 /* ------------------------------------------------------------------ Edges */

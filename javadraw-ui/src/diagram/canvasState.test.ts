@@ -136,6 +136,16 @@ describe('canvasReducer', () => {
     expect(shown.nodes.find((n) => n.id === PESSOA)).toMatchObject({ visibleFields: ['nome'], visibleMethods: [call.target] })
   })
 
+  it('remembers a resized card until it is set back to automatic', () => {
+    const sized = canvasReducer(start(), { type: 'resizeNode', typeId: BOLETO, size: { width: 400, height: 200 } })
+    expect(sized.nodes[0].size).toEqual({ width: 400, height: 200 })
+    expect(canvasReducer(sized, { type: 'resizeNode', typeId: BOLETO, size: { width: 400, height: 200 } })).toBe(sized)
+
+    const auto = canvasReducer(sized, { type: 'autoSizeNode', typeId: BOLETO })
+    expect(auto.nodes[0].size).toBeUndefined()
+    expect(canvasReducer(auto, { type: 'autoSizeNode', typeId: BOLETO })).toBe(auto)
+  })
+
   it('clears back to an empty canvas for the same project', () => {
     const cleared = canvasReducer(start(), { type: 'clear' })
     expect(cleared).toEqual(emptyCanvas('test'))

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Background,
   BackgroundVariant,
@@ -25,6 +25,8 @@ import { CanvasCard } from './CanvasCard'
 import { RelationEdge } from './RelationEdge'
 import { EdgeMarkers } from './EdgeMarkers'
 import { EdgeThemeProvider } from './EdgeTheme'
+import { CardActionsProvider } from './CardActions'
+import type { Size } from './canvasState'
 
 const nodeTypes = { card: CanvasCard }
 const edgeTypes = { relation: RelationEdge }
@@ -40,9 +42,11 @@ interface Props {
   showMinimap: boolean
   onSelectionChange: (ids: string[]) => void
   onMove: (positions: Record<string, XY>) => void
+  onResize: (typeId: string, size: Size) => void
 }
 
-export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelectionChange, onMove }: Props) {
+export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelectionChange, onMove, onResize }: Props) {
+  const cardActions = useMemo(() => ({ resize: onResize }), [onResize])
   const { getNode, fitView } = useReactFlow()
   // Mounting already selected avoids React Flow reporting an empty selection back and fighting the canvas state.
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(withSelection(nodes, selectedIds, getNode))
@@ -84,6 +88,7 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
 
   return (
     <EdgeThemeProvider dark={dark}>
+      <CardActionsProvider value={cardActions}>
       <div className={`h-full w-full ${panning ? 'jd-panning' : ''}`} onContextMenu={(e) => e.preventDefault()}>
         <ReactFlow
           nodes={rfNodes}
@@ -118,6 +123,7 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
           {showMinimap && <MiniMap pannable zoomable position="bottom-right" nodeBorderRadius={6} nodeColor={minimapColor} />}
         </ReactFlow>
       </div>
+      </CardActionsProvider>
     </EdgeThemeProvider>
   )
 }
