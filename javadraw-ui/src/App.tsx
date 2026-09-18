@@ -269,20 +269,19 @@ function Workspace({ index }: { index: GraphIndex }) {
           </aside>
         )}
 
+        {/* React Flow stays mounted even with an empty diagram: unmounting it inside the provider makes its
+            store loop when the canvas is filled again. The empty state is an overlay instead. */}
         <main className="relative min-w-0 flex-1">
-          {empty ? (
-            <EmptyCanvas />
-          ) : (
-            <Canvas
-              nodes={nodes}
-              edges={edges}
-              dark={dark}
-              selectedIds={selectedIds}
-              showMinimap={showMinimap}
-              onSelectionChange={selectionChanged}
-              onMove={(positions) => dispatch({ type: 'setPositions', positions })}
-            />
-          )}
+          <Canvas
+            nodes={nodes}
+            edges={edges}
+            dark={dark}
+            selectedIds={selectedIds}
+            showMinimap={showMinimap && !empty}
+            onSelectionChange={selectionChanged}
+            onMove={(positions) => dispatch({ type: 'setPositions', positions })}
+          />
+          {empty && <EmptyCanvas />}
         </main>
 
         {selectedIds.length > 1 && (
@@ -342,7 +341,7 @@ function sameIds(a: string[], b: string[]): boolean {
 
 function EmptyCanvas() {
   return (
-    <div className="grid h-full place-items-center p-8 text-center">
+    <div className="pointer-events-none absolute inset-0 grid place-items-center bg-[var(--jd-bg)] p-8 text-center">
       <div className="max-w-sm">
         <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-[var(--jd-surface-2)] text-[var(--jd-muted)]">
           <Plus size={22} />

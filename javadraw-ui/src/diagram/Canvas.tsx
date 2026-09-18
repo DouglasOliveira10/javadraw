@@ -42,8 +42,9 @@ interface Props {
 }
 
 export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelectionChange, onMove }: Props) {
-  const [rfNodes, setRfNodes, onNodesChange] = useNodesState(nodes)
   const { getNode, fitView } = useReactFlow()
+  // Mounting already selected avoids React Flow reporting an empty selection back and fighting the canvas state.
+  const [rfNodes, setRfNodes, onNodesChange] = useNodesState(withSelection(nodes, selectedIds, getNode))
   const initialized = useNodesInitialized()
   const fitted = useRef(false)
   const panning = useSpacePan()
@@ -57,14 +58,12 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
 
   // React Flow keeps its own node array (used by the minimap and while dragging); the canvas state stays
   // the source of truth. Measured sizes are copied back from the store, otherwise the minimap skips the nodes.
+  // Returning the previous array when nothing changed is what stops the selection from echoing back and forth.
   useEffect(() => {
-    const selection = new Set(selectedIds)
-    setRfNodes(
-      nodes.map((n) => {
-        const measured = getNode(n.id)?.measured
-        return { ...n, selected: selection.has(n.id), ...(measured?.width ? { measured } : {}) }
-      }),
-    )
+    setRfNodes((previous) => {
+      const next = withSelection(nodes, selectedIds, getNode)
+      return sameNodes(previous, next) ? previous : next
+    })
   }, [nodes, selectedIds, initialized, getNode, setRfNodes])
 
   const onNodeClick: NodeMouseHandler = (event, node) => {
@@ -117,6 +116,32 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
         {showMinimap && <MiniMap pannable zoomable position="bottom-right" nodeBorderRadius={6} nodeColor={minimapColor} />}
       </ReactFlow>
     </div>
+  )
+}
+
+function withSelection(nodes: Node[], selectedIds: string[], getNode: (id: string) => Node | undefined): Node[] {
+  const selection = new Set(selectedIds)
+  return nodes.map((node) => {
+    const measured = getNode(node.id)?.measured
+    return { ...node, selected: selection.has(node.id), ...(measured?.width ? { measured } : {}) }
+  })
+}
+
+function sameNodes(a: Node[], b: Node[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((node, i) => {
+      const other = b[i]
+      return (
+        node.id === other.id &&
+        node.selected === other.selected &&
+        node.data === other.data &&
+        node.position.x === other.position.x &&
+        node.position.y === other.position.y &&
+        node.measured?.width === other.measured?.width &&
+        node.measured?.height === other.measured?.height
+      )
+    })
   )
 }
 
