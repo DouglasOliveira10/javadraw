@@ -8,6 +8,7 @@ import {
   Map,
   Menu as MenuIcon,
   Moon,
+  Palette,
   Parentheses,
   Plus,
   Save,
@@ -18,12 +19,15 @@ import {
   X,
 } from 'lucide-react'
 import type { GraphIndex } from './data/graphIndex'
+import type { PaletteControls } from './data/palette'
 import type { Relation } from './data/types'
 import { pluralize } from './data/format'
 import { arrangePositions } from './layout/arrange'
 import { Canvas, useExportPng } from './diagram/Canvas'
 import { Menu, MenuItem, MenuSeparator, MenuSubmenu, MenuToggle } from './components/Menu'
 import { prefersDark, useStoredFlag } from './data/preferences'
+import { PaletteProvider, usePaletteState } from './data/palette'
+import { ColorMenu } from './components/ColorMenu'
 import { ClassPicker } from './diagram/ClassPicker'
 import { Inspector } from './diagram/Inspector'
 import { SelectionPanel } from './diagram/SelectionPanel'
@@ -35,14 +39,17 @@ import type { PruneResult } from './diagram/prune'
 import { directionFor, placeNode, type Box } from './diagram/placement'
 
 export function App({ index }: { index: GraphIndex }) {
+  const palette = usePaletteState()
   return (
-    <ReactFlowProvider>
-      <Workspace index={index} />
-    </ReactFlowProvider>
+    <PaletteProvider palette={palette.palette}>
+      <ReactFlowProvider>
+        <Workspace index={index} palette={palette} />
+      </ReactFlowProvider>
+    </PaletteProvider>
   )
 }
 
-function Workspace({ index }: { index: GraphIndex }) {
+function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteControls }) {
   const project = index.graph.meta.name
   const { state, dispatch, exportJson, importJson, restored } = useCanvas(index)
   const [dark, setDark] = useDarkMode()
@@ -211,6 +218,7 @@ function Workspace({ index }: { index: GraphIndex }) {
           canArrange={state.nodes.length >= 2}
           pickerOpen={pickerOpen}
           showMinimap={showMinimap}
+          palette={palette}
           showFieldTypes={showFieldTypes}
           showParameters={showParameters}
           showReturnTypes={showReturnTypes}
@@ -386,6 +394,7 @@ interface MenuProps {
   canArrange: boolean
   pickerOpen: boolean
   showMinimap: boolean
+  palette: PaletteControls
   showFieldTypes: boolean
   showParameters: boolean
   showReturnTypes: boolean
@@ -407,6 +416,7 @@ function DiagramMenu({
   canArrange,
   pickerOpen,
   showMinimap,
+  palette,
   showFieldTypes,
   showParameters,
   showReturnTypes,
@@ -449,6 +459,9 @@ function DiagramMenu({
         <MenuItem icon={<ImageDown size={14} />} label={exporting ? 'Exporting…' : 'PNG'} disabled={exporting} onSelect={onExportPng} />
       </MenuSubmenu>
       <MenuSeparator />
+      <MenuSubmenu icon={<Palette size={14} />} label="Colors">
+        <ColorMenu {...palette} />
+      </MenuSubmenu>
       <MenuToggle icon={<Type size={14} />} label="Show field types" checked={showFieldTypes} onChange={onToggleFieldTypes} />
       <MenuToggle icon={<Parentheses size={14} />} label="Show parameters" checked={showParameters} onChange={onToggleParameters} />
       <MenuToggle icon={<CornerDownLeft size={14} />} label="Show return types" checked={showReturnTypes} onChange={onToggleReturnTypes} />

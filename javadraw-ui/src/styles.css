@@ -312,6 +312,26 @@ body {
   color: var(--jd-muted);
 }
 
+/* Native colour picker, trimmed to a small swatch. */
+.jd-color-input {
+  width: 22px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--jd-border-strong);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.jd-color-input::-webkit-color-swatch-wrapper {
+  padding: 1px;
+}
+
+.jd-color-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+
 /* ------------------------------------------------------------------ Chrome */
 
 .jd-panel {

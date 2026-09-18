@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react'
 import type { TypeKind, Visibility } from '../data/types'
 import { VISIBILITY_GLYPH, httpVerb } from '../data/format'
-import { STEREOTYPE_COLORS, VERB_COLORS, kindColor } from '../theme'
+import { VERB_COLORS, kindColor, stereotypeColor } from '../theme'
+import { usePalette } from '../data/palette'
 
 const KIND_LETTER: Record<TypeKind, string> = {
   CLASS: 'C',
@@ -12,7 +13,7 @@ const KIND_LETTER: Record<TypeKind, string> = {
 }
 
 export function KindBadge({ kind, abstract, size = 20 }: { kind: TypeKind; abstract?: boolean; size?: number }) {
-  const color = kindColor(kind)
+  const color = kindColor(kind, usePalette())
   return (
     <span
       title={`${abstract ? 'abstract ' : ''}${kind.toLowerCase()}`}
@@ -32,7 +33,7 @@ export function KindBadge({ kind, abstract, size = 20 }: { kind: TypeKind; abstr
 }
 
 export function StereotypePill({ stereotype }: { stereotype: string }) {
-  const color = STEREOTYPE_COLORS[stereotype] ?? '#64748b'
+  const color = stereotypeColor(stereotype, usePalette())
   return (
     <span className="jd-pill" style={{ '--accent': color } as CSSProperties}>
       {stereotype}

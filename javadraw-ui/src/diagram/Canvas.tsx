@@ -19,6 +19,7 @@ import {
 } from '@xyflow/react'
 import { toPng } from 'html-to-image'
 import { accentOf } from '../theme'
+import { usePalette } from '../data/palette'
 import type { TypeInfo } from '../data/types'
 import type { XY } from './canvasState'
 import { CanvasCard } from './CanvasCard'
@@ -47,6 +48,8 @@ interface Props {
 
 export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelectionChange, onMove, onResize }: Props) {
   const cardActions = useMemo(() => ({ resize: onResize }), [onResize])
+  const palette = usePalette()
+  const minimapColor = useCallback((node: Node) => accentOf((node.data as { type?: TypeInfo }).type, palette), [palette])
   const { getNode, fitView } = useReactFlow()
   // Mounting already selected avoids React Flow reporting an empty selection back and fighting the canvas state.
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(withSelection(nodes, selectedIds, getNode))
@@ -191,10 +194,6 @@ function useSpacePan(): boolean {
 function isTyping(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null
   return !!element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.isContentEditable)
-}
-
-function minimapColor(node: Node): string {
-  return accentOf((node.data as { type?: TypeInfo }).type)
 }
 
 /** Renders the current canvas to a PNG download; must be used inside the React Flow provider. */

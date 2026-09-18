@@ -4,6 +4,7 @@ import { EndpointBadge, KindBadge, StereotypePill, VisibilityGlyph } from '../co
 import { parameterTypes, splitSignature } from '../data/format'
 import type { MethodInfo } from '../data/types'
 import { accentOf } from '../theme'
+import { usePalette } from '../data/palette'
 import { useCardActions } from './CardActions'
 import { cardHandle, fieldHandle, methodHandle, type Side } from './handles'
 import type { CardData } from './toReactFlow'
@@ -52,6 +53,7 @@ function methodLabel(method: MethodInfo, showParameters: boolean, showReturnType
 function CanvasCardComponent({ id, data, selected }: NodeProps<Node<CardData>>) {
   const { type, fields, methods, hiddenCount, showFieldTypes, showParameters, showReturnTypes, sized } = data
   const { resize } = useCardActions()
+  const palette = usePalette()
   const abstract = type.modifiers?.includes('abstract')
   const classes = [
     'jd-card',
@@ -72,7 +74,7 @@ function CanvasCardComponent({ id, data, selected }: NodeProps<Node<CardData>>) 
         handleClassName="jd-resize-handle"
         onResizeEnd={(_, params) => resize(id, { width: Math.round(params.width), height: Math.round(params.height) })}
       />
-      <div className={classes} style={{ '--accent': accentOf(type) } as CSSProperties}>
+      <div className={classes} style={{ '--accent': accentOf(type, palette) } as CSSProperties}>
         <RowHandles id={cardHandle} />
 
         <div className="flex items-start gap-2 px-3 pb-2 pt-2">
