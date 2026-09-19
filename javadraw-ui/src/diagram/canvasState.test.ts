@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CallEdge, Relation } from '../data/types'
-import { canvasReducer, emptyCanvas, manualEdgeId, relationEdgeId, type CanvasState } from './canvasState'
+import { callEdgeId, canvasReducer, emptyCanvas, manualEdgeId, relationEdgeId, type CanvasState } from './canvasState'
 
 const BOLETO = 'app.BoletoDTO'
 const PESSOA = 'app.BoletoDTO$Pessoa'
@@ -137,14 +137,20 @@ describe('hand-drawn edges', () => {
   const twoCards = () => reduce(start(), { type: 'addType', typeId: ENDERECO })
 
   it('connects any two cards, even without a relation behind it', () => {
-    const state = canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO, sourceSide: 'r', targetSide: 'l' })
+    const state = canvasReducer(twoCards(), {
+      type: 'connect',
+      source: BOLETO,
+      target: ENDERECO,
+      sourceAnchor: { side: 'r', offset: 0.5 },
+      targetAnchor: { side: 'l', offset: 0.5 },
+    })
     expect(state.edges).toHaveLength(1)
     expect(state.edges[0]).toMatchObject({
       kind: 'MANUAL',
       origin: 'manual',
       source: BOLETO,
       target: ENDERECO,
-      anchors: { source: 'r', target: 'l' },
+      anchors: { source: { side: 'r', offset: 0.5 }, target: { side: 'l', offset: 0.5 } },
     })
   })
 
@@ -194,11 +200,45 @@ describe('hand-drawn edges', () => {
     const edgeId = state.edges[0].id
     expect(state.edges[0].waypoints).toEqual([{ x: 5, y: 5 }])
 
-    const moved = canvasReducer(state, { type: 'reconnectEdge', edgeId, target: ENDERECO, targetSide: 't' })
-    expect(moved.edges[0]).toMatchObject({ source: BOLETO, target: ENDERECO, anchors: { target: 't' } })
+    const moved = canvasReducer(state, { type: 'anchorEdge', edgeId, end: 'target', typeId: ENDERECO, anchor: { side: 't', offset: 0.3 } })
+    expect(moved.edges[0]).toMatchObject({ source: BOLETO, target: ENDERECO, anchors: { target: { side: 't', offset: 0.3 } } })
     expect(moved.edges[0].waypoints).toBeUndefined()
 
-    expect(canvasReducer(moved, { type: 'reconnectEdge', edgeId, target: BOLETO })).toBe(moved)
+    expect(canvasReducer(moved, { type: 'anchorEdge', edgeId, end: 'target', typeId: BOLETO })).toBe(moved)
+    expect(canvasReducer(moved, { type: 'anchorEdge', edgeId, end: 'target', typeId: 'app.Nowhere' })).toBe(moved)
+  })
+
+  it('slides an end along the same card without losing the bends', () => {
+    const state = reduce(
+      canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO }),
+      { type: 'setWaypoints', edgeId: 'M:0', points: [{ x: 5, y: 5 }] },
+      { type: 'anchorEdge', edgeId: 'M:0', end: 'source', anchor: { side: 'b', offset: 0.8 } },
+    )
+    expect(state.edges[0]).toMatchObject({
+      source: BOLETO,
+      anchors: { source: { side: 'b', offset: 0.8 } },
+      waypoints: [{ x: 5, y: 5 }],
+    })
+  })
+
+  it('detaches the end from the member it was anchored on', () => {
+    const state = reduce(
+      canvasReducer(start(), { type: 'addCall', call }),
+      { type: 'anchorEdge', edgeId: callEdgeId(call), end: 'source', anchor: { side: 'r', offset: 0.5 } },
+    )
+    expect(state.edges[0].sourceMember).toBeUndefined()
+    expect(state.edges[0].targetMember).toBe(call.target)
+  })
+
+  it('gives the automatic route back', () => {
+    const state = reduce(
+      canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO, sourceAnchor: { side: 'r', offset: 0.5 } }),
+      { type: 'setWaypoints', edgeId: 'M:0', points: [{ x: 5, y: 5 }] },
+    )
+    const reset = canvasReducer(state, { type: 'resetRoute', edgeId: 'M:0' })
+    expect(reset.edges[0].anchors).toBeUndefined()
+    expect(reset.edges[0].waypoints).toBeUndefined()
+    expect(canvasReducer(reset, { type: 'resetRoute', edgeId: 'M:0' })).toBe(reset)
   })
 
   it('keeps the bend points until they are cleared', () => {

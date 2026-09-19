@@ -104,7 +104,7 @@ export function EdgeInspector({ index, state, edgeId, onClose, onSelectNode, onS
         </Section>
 
         <div className="space-y-1.5">
-          {edge.waypoints && edge.waypoints.length > 0 && (
+          {(edge.anchors || edge.waypoints) && (
             <button className="jd-btn w-full justify-center" onClick={() => onResetRoute(edgeId)} title={t('edge.resetRouteHint')}>
               {t('edge.resetRoute')}
             </button>

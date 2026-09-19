@@ -333,7 +333,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
             onRemoveNodes={removeNodes}
             onRemoveEdges={removeEdges}
             onConnect={(connection) => dispatch({ type: 'connect', ...connection })}
-            onReconnect={(edgeId, change) => dispatch({ type: 'reconnectEdge', edgeId, ...change })}
+            onMoveEnd={(edgeId, end, typeId, anchor) => dispatch({ type: 'anchorEdge', edgeId, end, typeId, anchor })}
             onWaypoints={(edgeId, points) => dispatch({ type: 'setWaypoints', edgeId, points })}
           />
           {empty && <EmptyCanvas />}
@@ -362,7 +362,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
             onClose={clearSelection}
             onSelectNode={(id) => selectionChanged({ nodes: [id], edges: [] })}
             onStyle={(edgeId, style) => dispatch({ type: 'styleEdge', edgeId, style })}
-            onResetRoute={(edgeId) => dispatch({ type: 'setWaypoints', edgeId, points: [] })}
+            onResetRoute={(edgeId) => dispatch({ type: 'resetRoute', edgeId })}
             onRemove={(id) => removeEdges([id])}
           />
         )}

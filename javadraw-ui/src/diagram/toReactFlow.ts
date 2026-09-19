@@ -1,7 +1,7 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { GraphIndex } from '../data/graphIndex'
 import type { FieldInfo, MethodInfo, TypeInfo } from '../data/types'
-import type { CanvasEdge, CanvasState, EdgeStyle, XY } from './canvasState'
+import type { CanvasEdge, CanvasState, EdgeAnchors, EdgeStyle, XY } from './canvasState'
 import { cardHandle, facingSides, fieldHandle, methodHandle, verticalSides } from './handles'
 
 export interface CardData extends Record<string, unknown> {
@@ -31,6 +31,8 @@ export interface CanvasEdgeData extends Record<string, unknown> {
   /** What the user changed by hand: stroke, arrow heads, colour, text. */
   style?: EdgeStyle
   waypoints?: XY[]
+  /** Points pinned on the card borders; the edge draws itself from these, not from its handles. */
+  anchors?: EdgeAnchors
 }
 
 const ORIGIN: XY = { x: 0, y: 0 }
@@ -74,8 +76,8 @@ export function toReactFlowEdges(state: CanvasState): Edge<CanvasEdgeData>[] {
     const automatic = inheritance ? verticalSides(from, to) : facingSides(from, to)
     // A side the user pinned by dragging an end there wins over the one the positions suggest.
     const sides = {
-      source: edge.anchors?.source ?? automatic.source,
-      target: edge.anchors?.target ?? automatic.target,
+      source: edge.anchors?.source?.side ?? automatic.source,
+      target: edge.anchors?.target?.side ?? automatic.target,
     }
 
     // Anchor on the member that explains the edge whenever it is revealed on the card.
@@ -101,6 +103,7 @@ export function toReactFlowEdges(state: CanvasState): Edge<CanvasEdgeData>[] {
         line: edge.line,
         style: edge.style,
         waypoints: edge.waypoints,
+        anchors: edge.anchors,
       } satisfies CanvasEdgeData,
     }
   })

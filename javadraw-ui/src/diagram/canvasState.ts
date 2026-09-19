@@ -39,6 +39,22 @@ export interface EdgeStyle {
   text?: string
 }
 
+/**
+ * Where an edge touches a card: which side, and how far along it — 0 is the left or top corner, 1 the
+ * right or bottom one, 0.5 the middle. Without an anchor the side follows where the two cards sit.
+ */
+export interface EdgeAnchor {
+  side: Side
+  offset: number
+}
+
+export interface EdgeAnchors {
+  source?: EdgeAnchor
+  target?: EdgeAnchor
+}
+
+export type EdgeEnd = 'source' | 'target'
+
 export interface CanvasEdge {
   id: string
   kind: EdgeKind
@@ -54,14 +70,14 @@ export interface CanvasEdge {
   label?: string
   multiplicity?: string
   line?: number
-  /** Sides pinned by the user; without them the sides follow where the cards sit. */
-  anchors?: { source?: Side; target?: Side }
+  /** Points pinned by the user on the border of each card. */
+  anchors?: EdgeAnchors
   style?: EdgeStyle
   /** Bend points, in canvas coordinates, between source and target. */
   waypoints?: XY[]
 }
 
-export const CANVAS_VERSION = 2
+export const CANVAS_VERSION = 3
 
 export interface CanvasState {
   version: typeof CANVAS_VERSION
@@ -78,11 +94,14 @@ export type CanvasAction =
   | { type: 'addCall'; call: CallEdge; position?: XY }
   | { type: 'removeNode'; typeId: string }
   /** A line the user drew, from any card to any other one, with or without a relation behind it. */
-  | { type: 'connect'; source: string; target: string; sourceSide?: Side; targetSide?: Side }
+  | { type: 'connect'; source: string; target: string; sourceAnchor?: EdgeAnchor; targetAnchor?: EdgeAnchor }
   | { type: 'removeEdges'; edgeIds: string[] }
   /** Merges into the edge style; a property set to undefined goes back to the kind's default. */
   | { type: 'styleEdge'; edgeId: string; style: EdgeStyle }
-  | { type: 'reconnectEdge'; edgeId: string; source?: string; target?: string; sourceSide?: Side; targetSide?: Side }
+  /** Moves one end of an edge: to another card, to another point on the border, or both. */
+  | { type: 'anchorEdge'; edgeId: string; end: EdgeEnd; typeId?: string; anchor?: EdgeAnchor }
+  /** Back to the automatic route: no pinned points, no bends. */
+  | { type: 'resetRoute'; edgeId: string }
   | { type: 'setWaypoints'; edgeId: string; points: XY[] }
   | { type: 'toggleField'; typeId: string; field: string; visible?: boolean }
   | { type: 'toggleMethod'; typeId: string; methodId: string; visible?: boolean }
@@ -176,7 +195,7 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
         origin: 'manual',
         source: action.source,
         target: action.target,
-        anchors: anchorsOf(action.sourceSide, action.targetSide),
+        anchors: anchorsOf(action.sourceAnchor, action.targetAnchor),
       })
     }
 
@@ -192,26 +211,31 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
         return { ...edge, style }
       })
 
-    case 'reconnectEdge':
+    case 'anchorEdge':
       return mapEdge(state, action.edgeId, (edge) => {
-        const source = action.source ?? edge.source
-        const target = action.target ?? edge.target
-        if (source === target) return edge
-        const anchors = anchorsOf(
-          action.source || action.sourceSide ? action.sourceSide : edge.anchors?.source,
-          action.target || action.targetSide ? action.targetSide : edge.anchors?.target,
-        )
-        // The member anchors described the old endpoints; a moved end points at the card again.
+        const { end, anchor } = action
+        const other = end === 'source' ? edge.target : edge.source
+        const typeId = action.typeId ?? (end === 'source' ? edge.source : edge.target)
+        if (typeId === other || !state.nodes.some((n) => n.id === typeId)) return edge
+        const moved = typeId !== (end === 'source' ? edge.source : edge.target)
         return {
           ...edge,
-          source,
-          target,
-          anchors,
-          sourceMember: action.source ? undefined : edge.sourceMember,
-          targetMember: action.target ? undefined : edge.targetMember,
-          waypoints: undefined,
+          [end]: typeId,
+          anchors: anchorsOf(
+            end === 'source' ? anchor : edge.anchors?.source,
+            end === 'target' ? anchor : edge.anchors?.target,
+          ),
+          // A member anchored the old point; once the end is dragged it belongs to the card again.
+          sourceMember: end === 'source' ? undefined : edge.sourceMember,
+          targetMember: end === 'target' ? undefined : edge.targetMember,
+          waypoints: moved ? undefined : edge.waypoints,
         }
       })
+
+    case 'resetRoute':
+      return mapEdge(state, action.edgeId, (edge) =>
+        edge.anchors || edge.waypoints ? { ...edge, anchors: undefined, waypoints: undefined } : edge,
+      )
 
     case 'setWaypoints':
       return mapEdge(state, action.edgeId, (edge) => ({
@@ -281,7 +305,7 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
   }
 }
 
-function anchorsOf(source?: Side, target?: Side): CanvasEdge['anchors'] {
+function anchorsOf(source?: EdgeAnchor, target?: EdgeAnchor): EdgeAnchors | undefined {
   return source || target ? { source, target } : undefined
 }
 

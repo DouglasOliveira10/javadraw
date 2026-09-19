@@ -132,6 +132,15 @@ describe('migrate', () => {
     expect(migrated.edges.every((e) => e.origin === 'graph')).toBe(true)
   })
 
+  it('turns a version 2 pinned side into a point halfway along it', () => {
+    const old = {
+      ...saved(),
+      version: 2,
+      edges: [{ ...association, anchors: { source: 'r', target: 'l' } }],
+    } as unknown as CanvasState
+    expect(migrate(old).edges[0].anchors).toEqual({ source: { side: 'r', offset: 0.5 }, target: { side: 'l', offset: 0.5 } })
+  })
+
   it('leaves a current diagram alone and refuses one from the future', () => {
     const current = saved()
     expect(migrate(current)).toBe(current)

@@ -180,22 +180,56 @@ body {
   pointer-events: stroke;
 }
 
-/* Bend points of a selected edge: solid ones exist, hollow ones appear when grabbed. */
-.jd-bend {
-  cursor: grab;
-  stroke-width: 1.5;
+/*
+ * Grips of a selected edge — the two ends and the bend points. They are drawn in the viewport portal,
+ * above the cards, because an end sits on a card border and edges are painted below the cards.
+ */
+.jd-grip {
+  position: absolute;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
   pointer-events: all;
+  cursor: grab;
+  transition: transform 100ms ease;
 }
 
-.jd-bend:active {
+.jd-exporting .jd-grip {
+  display: none;
+}
+
+.jd-grip:active {
   cursor: grabbing;
 }
 
-.jd-bend-new {
-  opacity: 0.55;
+.jd-grip:hover {
+  transform: translate(-50%, -50%) scale(1.2);
 }
 
-.jd-bend-new:hover {
+/* Both ends of the line: drag one along a border, or onto another card. */
+.jd-grip-end {
+  width: 12px;
+  height: 12px;
+  background: var(--jd-surface);
+  border: 2px solid var(--jd-accent);
+}
+
+/* A bend point that exists, and the faint one halfway down a segment that creates another. */
+.jd-grip-bend {
+  width: 11px;
+  height: 11px;
+  background: var(--jd-accent);
+  border: 2px solid var(--jd-surface);
+}
+
+.jd-grip-new {
+  width: 9px;
+  height: 9px;
+  background: var(--jd-surface);
+  border: 1.5px solid var(--jd-accent);
+  opacity: 0.5;
+}
+
+.jd-grip-new:hover {
   opacity: 1;
 }
 

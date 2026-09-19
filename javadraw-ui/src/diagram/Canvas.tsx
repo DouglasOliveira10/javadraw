@@ -24,12 +24,12 @@ import { toPng } from 'html-to-image'
 import { accentOf, edgePalette } from '../theme'
 import { usePalette } from '../data/palette'
 import type { TypeInfo } from '../data/types'
-import type { XY } from './canvasState'
+import type { EdgeAnchor, EdgeEnd, XY } from './canvasState'
 import { CanvasCard } from './CanvasCard'
 import { RelationEdge } from './RelationEdge'
 import { EdgeMarkers } from './EdgeMarkers'
 import { markerColours } from './edgeLook'
-import { sideOfHandle, type Side } from './handles'
+import { sideOfHandle } from './handles'
 import type { CanvasEdgeData } from './toReactFlow'
 import { EdgeThemeProvider } from './EdgeTheme'
 import { CardActionsProvider } from './CardActions'
@@ -60,9 +60,9 @@ interface Props {
   onRemoveNodes: (typeIds: string[]) => void
   onRemoveEdges: (edgeIds: string[]) => void
   /** A line pulled from one card to another, with the sides it was drawn between. */
-  onConnect: (connection: { source: string; target: string; sourceSide?: Side; targetSide?: Side }) => void
-  /** An end of an existing edge dropped on another card. */
-  onReconnect: (edgeId: string, change: { source?: string; target?: string; sourceSide?: Side; targetSide?: Side }) => void
+  onConnect: (connection: { source: string; target: string; sourceAnchor?: EdgeAnchor; targetAnchor?: EdgeAnchor }) => void
+  /** An end of an existing edge dropped on a card border. */
+  onMoveEnd: (edgeId: string, end: EdgeEnd, typeId: string, anchor: EdgeAnchor) => void
   onWaypoints: (edgeId: string, points: XY[]) => void
 }
 
@@ -79,12 +79,12 @@ export function Canvas({
   onRemoveNodes,
   onRemoveEdges,
   onConnect,
-  onReconnect,
+  onMoveEnd,
   onWaypoints,
 }: Props) {
   const [connecting, setConnecting] = useState(false)
   const cardActions = useMemo(() => ({ resize: onResize }), [onResize])
-  const edgeActions = useMemo(() => ({ setWaypoints: onWaypoints }), [onWaypoints])
+  const edgeActions = useMemo(() => ({ setWaypoints: onWaypoints, moveEnd: onMoveEnd }), [onWaypoints, onMoveEnd])
   const palette = usePalette()
   const edgeColours = useMemo(
     () => markerColours(edges.map((e) => (e.data as CanvasEdgeData | undefined)?.style), edgePalette(dark)),
@@ -146,23 +146,11 @@ export function Canvas({
       onConnect({
         source: connection.source,
         target: connection.target,
-        sourceSide: sideOfHandle(connection.sourceHandle),
-        targetSide: sideOfHandle(connection.targetHandle),
+        sourceAnchor: anchorOfHandle(connection.sourceHandle),
+        targetAnchor: anchorOfHandle(connection.targetHandle),
       })
     },
     [onConnect],
-  )
-
-  /** Dragging an end of an edge onto another card moves that end there, side included. */
-  const handleReconnect = useCallback(
-    (previous: Edge, connection: Connection) => {
-      const change =
-        connection.source === previous.source
-          ? { target: connection.target, targetSide: sideOfHandle(connection.targetHandle) }
-          : { source: connection.source, sourceSide: sideOfHandle(connection.sourceHandle) }
-      onReconnect(previous.id, change)
-    },
-    [onReconnect],
   )
 
   const persistPositions = (dragged: Node[]) => {
@@ -196,8 +184,7 @@ export function Canvas({
           onConnectStart={() => setConnecting(true)}
           onConnectEnd={() => setConnecting(false)}
           onConnect={handleConnect}
-          onReconnect={handleReconnect}
-          reconnectRadius={12}
+          edgesReconnectable={false}
           deleteKeyCode={['Delete', 'Backspace']}
           onNodesDelete={(deleted) => onRemoveNodes(deleted.map((n) => n.id))}
           onEdgesDelete={(deleted) => onRemoveEdges(deleted.map((e) => e.id))}
@@ -236,6 +223,12 @@ function withSelection(nodes: Node[], selectedIds: string[], getNode: (id: strin
     const measured = getNode(node.id)?.measured
     return { ...node, selected: selection.has(node.id), ...(measured?.width ? { measured } : {}) }
   })
+}
+
+/** A line pulled from a dot starts halfway down that side; dropped on a card body, the side is automatic. */
+function anchorOfHandle(handleId: string | null | undefined): EdgeAnchor | undefined {
+  const side = sideOfHandle(handleId)
+  return side ? { side, offset: 0.5 } : undefined
 }
 
 function withEdgeSelection(edges: Edge[], selectedEdgeIds: string[]): Edge[] {
@@ -307,6 +300,8 @@ export function useExportPng(fileName: string): { exportPng: () => Promise<void>
     const viewport = document.querySelector<HTMLElement>('.react-flow__viewport')
     if (!viewport) return
     setBusy(true)
+    // The grips of a selected edge live in the viewport too, and they are tools, not drawing.
+    viewport.classList.add('jd-exporting')
     try {
       const bounds = getNodesBounds(getNodes())
       const padding = 48
@@ -325,6 +320,7 @@ export function useExportPng(fileName: string): { exportPng: () => Promise<void>
       link.href = dataUrl
       link.click()
     } finally {
+      viewport.classList.remove('jd-exporting')
       setBusy(false)
     }
   }

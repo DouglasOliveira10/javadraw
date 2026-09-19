@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import type { GraphIndex } from '../data/graphIndex'
-import { CANVAS_VERSION, canvasReducer, emptyCanvas, type CanvasAction, type CanvasState } from './canvasState'
+import { CANVAS_VERSION, canvasReducer, emptyCanvas, type CanvasAction, type CanvasEdge, type CanvasState, type EdgeAnchor } from './canvasState'
 import { pruneCanvas, type PruneResult } from './prune'
 
 function storageKey(project: string): string {
@@ -48,17 +48,31 @@ export function parseCanvas(text: string): CanvasState {
 
 /**
  * Diagrams saved by earlier versions keep working. Version 1 had no hand-drawn edges, so every edge it
- * carries came from the analyzed bytecode.
+ * carries came from the analyzed bytecode; version 2 pinned a whole side rather than a point on it.
  */
 export function migrate(state: CanvasState): CanvasState {
   const version = state.version as number
   if (version === CANVAS_VERSION) return state
-  if (version !== 1) throw new Error(`Unsupported diagram version: ${String(state.version)}`)
+  if (version !== 1 && version !== 2) throw new Error(`Unsupported diagram version: ${String(state.version)}`)
   return {
     ...state,
     version: CANVAS_VERSION,
-    edges: state.edges.map((edge) => ({ ...edge, origin: 'graph' })),
+    edges: state.edges.map((edge) => ({
+      ...edge,
+      origin: version === 1 ? 'graph' : edge.origin,
+      anchors: middleOfSides(edge.anchors),
+    })),
   }
+}
+
+/** A side pinned by version 2 becomes a point halfway along that side. */
+function middleOfSides(anchors: CanvasEdge['anchors']): CanvasEdge['anchors'] {
+  if (!anchors) return undefined
+  const point = (anchor: unknown): EdgeAnchor | undefined =>
+    typeof anchor === 'string' ? { side: anchor as EdgeAnchor['side'], offset: 0.5 } : (anchor as EdgeAnchor | undefined)
+  const source = point(anchors.source)
+  const target = point(anchors.target)
+  return source || target ? { source, target } : undefined
 }
 
 function restore(project: string): CanvasState | null {
