@@ -15,11 +15,13 @@ interface Props {
   onClose: () => void
   onSelectNode: (typeId: string) => void
   onStyle: (edgeId: string, style: EdgeStyle) => void
+  /** Throws away the bend points, back to the automatic route. */
+  onResetRoute: (edgeId: string) => void
   onRemove: (edgeId: string) => void
 }
 
 /** The right panel while a single edge is selected: what it means, how it looks, and the way out. */
-export function EdgeInspector({ index, state, edgeId, onClose, onSelectNode, onStyle, onRemove }: Props) {
+export function EdgeInspector({ index, state, edgeId, onClose, onSelectNode, onStyle, onResetRoute, onRemove }: Props) {
   const { t } = useI18n()
   const palette = useEdgeTheme()
   const edge = state.edges.find((e) => e.id === edgeId)
@@ -102,6 +104,11 @@ export function EdgeInspector({ index, state, edgeId, onClose, onSelectNode, onS
         </Section>
 
         <div className="space-y-1.5">
+          {edge.waypoints && edge.waypoints.length > 0 && (
+            <button className="jd-btn w-full justify-center" onClick={() => onResetRoute(edgeId)} title={t('edge.resetRouteHint')}>
+              {t('edge.resetRoute')}
+            </button>
+          )}
           {edge.style && (
             <button
               className="jd-btn w-full justify-center"

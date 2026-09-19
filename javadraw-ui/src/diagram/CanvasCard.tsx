@@ -7,7 +7,7 @@ import { accentOf } from '../theme'
 import { usePalette } from '../data/palette'
 import { useI18n } from '../i18n/I18nProvider'
 import { useCardActions } from './CardActions'
-import { cardHandle, fieldHandle, methodHandle, type Side } from './handles'
+import { BODY_HANDLE, cardHandle, fieldHandle, methodHandle, type Side } from './handles'
 import type { CardData } from './toReactFlow'
 
 const SIDES: { side: Side; position: Position }[] = [
@@ -42,6 +42,9 @@ function Ports() {
       {SIDES.map(({ side, position }) => (
         <Handle key={side} type="source" id={cardHandle(side)} position={position} className="jd-port" />
       ))}
+      {/* The card body as a landing area, so a line can be dropped anywhere on it; the side is then chosen
+          by where the cards sit. */}
+      <Handle type="source" id={BODY_HANDLE} position={Position.Left} className="jd-port jd-port-body" />
     </>
   )
 }

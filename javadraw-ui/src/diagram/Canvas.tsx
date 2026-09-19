@@ -33,6 +33,7 @@ import { sideOfHandle, type Side } from './handles'
 import type { CanvasEdgeData } from './toReactFlow'
 import { EdgeThemeProvider } from './EdgeTheme'
 import { CardActionsProvider } from './CardActions'
+import { EdgeActionsProvider } from './EdgeActions'
 import type { Size } from './canvasState'
 
 const nodeTypes = { card: CanvasCard }
@@ -60,6 +61,9 @@ interface Props {
   onRemoveEdges: (edgeIds: string[]) => void
   /** A line pulled from one card to another, with the sides it was drawn between. */
   onConnect: (connection: { source: string; target: string; sourceSide?: Side; targetSide?: Side }) => void
+  /** An end of an existing edge dropped on another card. */
+  onReconnect: (edgeId: string, change: { source?: string; target?: string; sourceSide?: Side; targetSide?: Side }) => void
+  onWaypoints: (edgeId: string, points: XY[]) => void
 }
 
 export function Canvas({
@@ -75,9 +79,12 @@ export function Canvas({
   onRemoveNodes,
   onRemoveEdges,
   onConnect,
+  onReconnect,
+  onWaypoints,
 }: Props) {
   const [connecting, setConnecting] = useState(false)
   const cardActions = useMemo(() => ({ resize: onResize }), [onResize])
+  const edgeActions = useMemo(() => ({ setWaypoints: onWaypoints }), [onWaypoints])
   const palette = usePalette()
   const edgeColours = useMemo(
     () => markerColours(edges.map((e) => (e.data as CanvasEdgeData | undefined)?.style), edgePalette(dark)),
@@ -146,6 +153,18 @@ export function Canvas({
     [onConnect],
   )
 
+  /** Dragging an end of an edge onto another card moves that end there, side included. */
+  const handleReconnect = useCallback(
+    (previous: Edge, connection: Connection) => {
+      const change =
+        connection.source === previous.source
+          ? { target: connection.target, targetSide: sideOfHandle(connection.targetHandle) }
+          : { source: connection.source, sourceSide: sideOfHandle(connection.sourceHandle) }
+      onReconnect(previous.id, change)
+    },
+    [onReconnect],
+  )
+
   const persistPositions = (dragged: Node[]) => {
     const positions: Record<string, XY> = {}
     for (const node of dragged) positions[node.id] = node.position
@@ -155,6 +174,7 @@ export function Canvas({
   return (
     <EdgeThemeProvider dark={dark}>
       <CardActionsProvider value={cardActions}>
+      <EdgeActionsProvider value={edgeActions}>
       <div
         className={`h-full w-full ${panning ? 'jd-panning' : ''} ${connecting ? 'jd-connecting' : ''}`}
         onContextMenu={(e) => e.preventDefault()}
@@ -176,6 +196,8 @@ export function Canvas({
           onConnectStart={() => setConnecting(true)}
           onConnectEnd={() => setConnecting(false)}
           onConnect={handleConnect}
+          onReconnect={handleReconnect}
+          reconnectRadius={12}
           deleteKeyCode={['Delete', 'Backspace']}
           onNodesDelete={(deleted) => onRemoveNodes(deleted.map((n) => n.id))}
           onEdgesDelete={(deleted) => onRemoveEdges(deleted.map((e) => e.id))}
@@ -202,6 +224,7 @@ export function Canvas({
           {showMinimap && <MiniMap pannable zoomable position="bottom-right" nodeBorderRadius={6} nodeColor={minimapColor} />}
         </ReactFlow>
       </div>
+      </EdgeActionsProvider>
       </CardActionsProvider>
     </EdgeThemeProvider>
   )

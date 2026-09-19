@@ -2,6 +2,9 @@
 
 export type Side = 'l' | 'r' | 't' | 'b'
 
+/** The whole card as one drop target, used while a line is being drawn. */
+export const BODY_HANDLE = 'card-body'
+
 export function cardHandle(side: Side): string {
   return `card-${side}`
 }
@@ -16,7 +19,8 @@ export function methodHandle(methodId: string, side: Side): string {
 
 /** Reads back the side a handle sits on, for a line the user just drew. */
 export function sideOfHandle(handleId: string | null | undefined): Side | undefined {
-  const side = handleId?.slice(-1)
+  if (!handleId || handleId === BODY_HANDLE) return undefined
+  const side = handleId.slice(-1)
   return side === 'l' || side === 'r' || side === 't' || side === 'b' ? side : undefined
 }
 

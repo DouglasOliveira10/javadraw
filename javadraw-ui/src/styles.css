@@ -153,6 +153,52 @@ body {
   transform: scale(1.25);
 }
 
+/*
+ * The card itself as a landing area: a line being drawn can be dropped anywhere on it, not only on the
+ * dots. It stays out of the way at every other moment, so it never steals a click from the card.
+ */
+.jd-port-body,
+.react-flow__node:hover .jd-port-body,
+.react-flow__node.selected .jd-port-body {
+  opacity: 0;
+  width: 100% !important;
+  height: 100% !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  border: 0 !important;
+  background: transparent !important;
+  pointer-events: none;
+}
+
+.jd-connecting .jd-port-body {
+  pointer-events: all;
+}
+
+/* The wide invisible band along an edge: a line is 1.4px thin, and nobody aims that well. */
+.react-flow__edge-interaction {
+  pointer-events: stroke;
+}
+
+/* Bend points of a selected edge: solid ones exist, hollow ones appear when grabbed. */
+.jd-bend {
+  cursor: grab;
+  stroke-width: 1.5;
+  pointer-events: all;
+}
+
+.jd-bend:active {
+  cursor: grabbing;
+}
+
+.jd-bend-new {
+  opacity: 0.55;
+}
+
+.jd-bend-new:hover {
+  opacity: 1;
+}
+
 /* While a line is being pulled, every card shows where it can land. */
 .jd-connecting .jd-port {
   opacity: 1;
