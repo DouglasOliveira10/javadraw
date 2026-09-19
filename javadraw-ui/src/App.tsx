@@ -358,6 +358,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
             edgeId={selectedEdgeId}
             onClose={clearSelection}
             onSelectNode={(id) => selectionChanged({ nodes: [id], edges: [] })}
+            onStyle={(edgeId, style) => dispatch({ type: 'styleEdge', edgeId, style })}
             onRemove={(id) => removeEdges([id])}
           />
         )}

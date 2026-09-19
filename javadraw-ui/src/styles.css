@@ -388,6 +388,14 @@ body {
   cursor: default;
 }
 
+/** The option currently in force, in a row of choices. */
+.jd-btn-active,
+.jd-btn-active:hover {
+  border-color: var(--jd-accent);
+  background: color-mix(in srgb, var(--jd-accent) 14%, transparent);
+  color: var(--jd-accent);
+}
+
 .jd-list-item {
   display: flex;
   align-items: center;

@@ -27,7 +27,7 @@ export interface CanvasNode {
 export type EdgeKind = RelationKind | 'CALL' | 'MANUAL'
 
 export type EdgeLine = 'solid' | 'dashed' | 'dotted'
-export type EdgeMarker = 'none' | 'arrow' | 'triangle' | 'diamond'
+export type EdgeMarker = 'none' | 'open' | 'arrow' | 'triangle' | 'diamond'
 
 /** What the user changed by hand; anything left out falls back to the look of the edge kind. */
 export interface EdgeStyle {

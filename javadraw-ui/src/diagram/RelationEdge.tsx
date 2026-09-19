@@ -1,30 +1,8 @@
 import { memo } from 'react'
 import { EdgeLabelRenderer, getSmoothStepPath, type Edge, type EdgeProps } from '@xyflow/react'
 import type { CanvasEdgeData } from './toReactFlow'
+import { edgeLook, markerUrl } from './edgeLook'
 import { useEdgeTheme } from './EdgeTheme'
-
-type Marker = 'triangle' | 'arrow' | 'open'
-
-interface Look {
-  marker: Marker
-  dash?: string
-  muted?: boolean
-}
-
-function lookOf(variant: CanvasEdgeData['variant']): Look {
-  switch (variant) {
-    case 'EXTENDS':
-      return { marker: 'triangle' }
-    case 'IMPLEMENTS':
-      return { marker: 'triangle', dash: '6 4' }
-    case 'ASSOCIATION':
-      return { marker: 'open' }
-    case 'DEPENDENCY':
-      return { marker: 'open', dash: '6 4', muted: true }
-    default:
-      return { marker: 'arrow' }
-  }
-}
 
 function RelationEdgeComponent(props: EdgeProps<Edge<CanvasEdgeData>>) {
   const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, data, selected } = props
@@ -40,9 +18,7 @@ function RelationEdgeComponent(props: EdgeProps<Edge<CanvasEdgeData>>) {
     targetPosition,
     borderRadius: 10,
   })
-  const look = lookOf(data.variant)
-  const stroke = selected ? palette.accent : look.muted ? palette.muted : palette.stroke
-  const markerId = `jd-${look.marker}${selected ? '-active' : look.muted ? '-muted' : ''}`
+  const look = edgeLook(data.variant, data.style, palette, !!selected)
 
   return (
     <>
@@ -52,10 +28,11 @@ function RelationEdgeComponent(props: EdgeProps<Edge<CanvasEdgeData>>) {
         d={path}
         className="jd-edge"
         fill="none"
-        stroke={stroke}
-        strokeWidth={selected ? 2 : 1.4}
+        stroke={look.stroke}
+        strokeWidth={look.width}
         strokeDasharray={look.dash}
-        markerEnd={`url(#${markerId})`}
+        markerStart={markerUrl(look.startMarker, look.stroke)}
+        markerEnd={markerUrl(look.endMarker, look.stroke)}
       />
       {data.label && (
         <EdgeLabelRenderer>

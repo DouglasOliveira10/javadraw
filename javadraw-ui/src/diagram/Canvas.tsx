@@ -19,13 +19,15 @@ import {
   type OnSelectionChangeParams,
 } from '@xyflow/react'
 import { toPng } from 'html-to-image'
-import { accentOf } from '../theme'
+import { accentOf, edgePalette } from '../theme'
 import { usePalette } from '../data/palette'
 import type { TypeInfo } from '../data/types'
 import type { XY } from './canvasState'
 import { CanvasCard } from './CanvasCard'
 import { RelationEdge } from './RelationEdge'
 import { EdgeMarkers } from './EdgeMarkers'
+import { markerColours } from './edgeLook'
+import type { CanvasEdgeData } from './toReactFlow'
 import { EdgeThemeProvider } from './EdgeTheme'
 import { CardActionsProvider } from './CardActions'
 import type { Size } from './canvasState'
@@ -70,6 +72,10 @@ export function Canvas({
 }: Props) {
   const cardActions = useMemo(() => ({ resize: onResize }), [onResize])
   const palette = usePalette()
+  const edgeColours = useMemo(
+    () => markerColours(edges.map((e) => (e.data as CanvasEdgeData | undefined)?.style), edgePalette(dark)),
+    [edges, dark],
+  )
   const minimapColor = useCallback((node: Node) => accentOf((node.data as { type?: TypeInfo }).type, palette), [palette])
   const { getNode, fitView } = useReactFlow()
   // Mounting already selected avoids React Flow reporting an empty selection back and fighting the canvas state.
@@ -159,7 +165,7 @@ export function Canvas({
           onSelectionDragStop={(_, dragged) => persistPositions(dragged)}
         >
           <ViewportPortal>
-            <EdgeMarkers />
+            <EdgeMarkers colours={edgeColours} />
           </ViewportPortal>
           <Background variant={BackgroundVariant.Dots} gap={22} size={1.3} />
           <Controls showInteractive={false} position="bottom-left" />
