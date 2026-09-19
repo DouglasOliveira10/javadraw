@@ -7,7 +7,7 @@
 - [x] 5 - criar um botao para fechar o menu de adicionar classe solta (o menu da esquerda)
 - [x] 6 - Criar menu para selecionar a cor dos tipos (Ex: se for class vermelho, se for interface verde etc, deixar usuario escolher a cor)
 - [x] 7 - ver a possibilidade de dar resize no card, porque hoje muito texto nao aparece completo.
-- [ ] 8 - deixar o usuario criar, editar e mover as arestas/ edge. Essa mudança vai ser grande, primeiro, hoje so podemos deletar um card se so uma edge existir 
+- [x] 8 - deixar o usuario criar, editar e mover as arestas/ edge. Essa mudança vai ser grande, primeiro, hoje so podemos deletar um card se so uma edge existir 
 - ligado naquele card (a mudança é que essa regra vai cair, todos os card poderão ser deletados e as edges ligados a ele tambem). Teremos que ter um menu para
 - escolher o tipo de edge (tracejado, liso etc) para que possamos selecionar uma edge e editar. Poderemos selecionar uma edge e deletar tambem. E ao chegar perto 
 - de uma borda um pontinho deve aparecer para puxarmos e criarmos um traço. Resumindo poderemos criar um linha de qualquer card para qualquer card (mesmo que nao faça sentido)
