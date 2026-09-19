@@ -9,6 +9,11 @@ export interface PruneResult {
   droppedEdges: number
 }
 
+/** Hand-drawn edges answer to no relation, so only their two cards have to survive. */
+function survives(edge: { id: string; origin?: string }, known: Set<string>): boolean {
+  return edge.origin === 'manual' || known.has(edge.id)
+}
+
 /**
  * A stored diagram can outlive the code it describes: classes get renamed, fields removed, calls dropped.
  * Everything that no longer exists in the freshly analyzed graph is discarded on load.
@@ -33,7 +38,7 @@ export function pruneCanvas(state: CanvasState, index: GraphIndex): PruneResult 
     })
 
   const ids = new Set(nodes.map((n) => n.id))
-  const edges = state.edges.filter((edge) => ids.has(edge.source) && ids.has(edge.target) && known.has(edge.id))
+  const edges = state.edges.filter((edge) => ids.has(edge.source) && ids.has(edge.target) && survives(edge, known))
 
   if (droppedTypes.length === 0 && edges.length === state.edges.length && nodes.every((n, i) => n === state.nodes[i])) {
     return { state, droppedTypes, droppedEdges: 0 }

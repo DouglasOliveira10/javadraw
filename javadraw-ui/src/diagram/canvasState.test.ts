@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CallEdge, Relation } from '../data/types'
-import { canRemove, canvasReducer, emptyCanvas, removeCascading, type CanvasState } from './canvasState'
+import { canvasReducer, emptyCanvas, manualEdgeId, relationEdgeId, type CanvasState } from './canvasState'
 
 const BOLETO = 'app.BoletoDTO'
 const PESSOA = 'app.BoletoDTO$Pessoa'
@@ -60,23 +60,15 @@ describe('canvasReducer', () => {
     expect(twice.edges).toHaveLength(1)
   })
 
-  it('removes a leaf together with its single edge', () => {
-    const state = canvasReducer(start(), { type: 'addRelation', relation: association(BOLETO, PESSOA, 'pessoa') })
-    expect(canRemove(state, PESSOA)).toBe(true)
-    const removed = canvasReducer(state, { type: 'removeNode', typeId: PESSOA })
-    expect(removed.nodes.map((n) => n.id)).toEqual([BOLETO])
-    expect(removed.edges).toEqual([])
-  })
-
-  it('refuses to remove a class holding two relations', () => {
-    const state = reduce(
+  it('removes a card together with every edge attached to it', () => {
+    const chain = reduce(
       start(),
       { type: 'addRelation', relation: association(BOLETO, PESSOA, 'pessoa') },
       { type: 'addRelation', relation: association(PESSOA, ENDERECO, 'endereco') },
     )
-    expect(canRemove(state, PESSOA)).toBe(false)
-    expect(canvasReducer(state, { type: 'removeNode', typeId: PESSOA })).toBe(state)
-    expect(canRemove(state, ENDERECO)).toBe(true)
+    const removed = canvasReducer(chain, { type: 'removeNode', typeId: PESSOA })
+    expect(removed.nodes.map((n) => n.id)).toEqual([BOLETO, ENDERECO])
+    expect(removed.edges).toEqual([])
   })
 
   it('toggles members without ever dropping an edge', () => {
@@ -97,27 +89,16 @@ describe('canvasReducer', () => {
     expect(arranged.nodes[0].position).toEqual({ x: 0, y: 0 })
   })
 
-  it('removes a whole branch at once, leaves first', () => {
+  it('removes several cards at once', () => {
     const chain = reduce(
       start(),
       { type: 'addRelation', relation: association(BOLETO, PESSOA, 'pessoa') },
       { type: 'addRelation', relation: association(PESSOA, ENDERECO, 'endereco') },
     )
-    const { state, blocked } = removeCascading(chain, [PESSOA, ENDERECO])
+    const state = canvasReducer(chain, { type: 'removeNodes', typeIds: [PESSOA, ENDERECO] })
     expect(state.nodes.map((n) => n.id)).toEqual([BOLETO])
     expect(state.edges).toEqual([])
-    expect(blocked).toEqual([])
-  })
-
-  it('keeps cards that still hold the diagram together', () => {
-    const chain = reduce(
-      start(),
-      { type: 'addRelation', relation: association(BOLETO, PESSOA, 'pessoa') },
-      { type: 'addRelation', relation: association(PESSOA, ENDERECO, 'endereco') },
-    )
-    const { state, blocked } = removeCascading(chain, [PESSOA])
-    expect(blocked).toEqual([PESSOA])
-    expect(state).toBe(chain)
+    expect(canvasReducer(state, { type: 'removeNodes', typeIds: ['nobody'] })).toBe(state)
   })
 
   it('replaces the members of several cards and keeps the relations', () => {
@@ -149,5 +130,81 @@ describe('canvasReducer', () => {
   it('clears back to an empty canvas for the same project', () => {
     const cleared = canvasReducer(start(), { type: 'clear' })
     expect(cleared).toEqual(emptyCanvas('test'))
+  })
+})
+
+describe('hand-drawn edges', () => {
+  const twoCards = () => reduce(start(), { type: 'addType', typeId: ENDERECO })
+
+  it('connects any two cards, even without a relation behind it', () => {
+    const state = canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO, sourceSide: 'r', targetSide: 'l' })
+    expect(state.edges).toHaveLength(1)
+    expect(state.edges[0]).toMatchObject({
+      kind: 'MANUAL',
+      origin: 'manual',
+      source: BOLETO,
+      target: ENDERECO,
+      anchors: { source: 'r', target: 'l' },
+    })
+  })
+
+  it('numbers each line, so two of them between the same cards stay apart', () => {
+    const once = canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO })
+    const twice = canvasReducer(once, { type: 'connect', source: BOLETO, target: ENDERECO })
+    expect(twice.edges.map((e) => e.id)).toEqual(['M:0', 'M:1'])
+    expect(manualEdgeId(twice)).toBe('M:2')
+  })
+
+  it('refuses a loop and a card that is not on the canvas', () => {
+    const state = twoCards()
+    expect(canvasReducer(state, { type: 'connect', source: BOLETO, target: BOLETO })).toBe(state)
+    expect(canvasReducer(state, { type: 'connect', source: BOLETO, target: PESSOA })).toBe(state)
+  })
+
+  it('removes an edge without touching the cards', () => {
+    const state = canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO })
+    const removed = canvasReducer(state, { type: 'removeEdges', edgeIds: ['M:0'] })
+    expect(removed.edges).toEqual([])
+    expect(removed.nodes).toEqual(state.nodes)
+    expect(canvasReducer(removed, { type: 'removeEdges', edgeIds: ['M:0'] })).toBe(removed)
+  })
+
+  it('merges the style and forgets the properties set back to default', () => {
+    const state = canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO })
+    const styled = reduce(
+      state,
+      { type: 'styleEdge', edgeId: 'M:0', style: { line: 'dashed', color: '#ff0000' } },
+      { type: 'styleEdge', edgeId: 'M:0', style: { text: 'publica em' } },
+    )
+    expect(styled.edges[0].style).toEqual({ line: 'dashed', color: '#ff0000', text: 'publica em' })
+
+    const reset = reduce(
+      styled,
+      { type: 'styleEdge', edgeId: 'M:0', style: { color: undefined, text: '' } },
+      { type: 'styleEdge', edgeId: 'M:0', style: { line: undefined } },
+    )
+    expect(reset.edges[0].style).toBeUndefined()
+  })
+
+  it('moves an end to another card and drops the route it had', () => {
+    const state = reduce(
+      canvasReducer(twoCards(), { type: 'addRelation', relation: association(BOLETO, PESSOA, 'pessoa') }),
+      { type: 'setWaypoints', edgeId: relationEdgeId(association(BOLETO, PESSOA, 'pessoa')), points: [{ x: 5, y: 5 }] },
+    )
+    const edgeId = state.edges[0].id
+    expect(state.edges[0].waypoints).toEqual([{ x: 5, y: 5 }])
+
+    const moved = canvasReducer(state, { type: 'reconnectEdge', edgeId, target: ENDERECO, targetSide: 't' })
+    expect(moved.edges[0]).toMatchObject({ source: BOLETO, target: ENDERECO, anchors: { target: 't' } })
+    expect(moved.edges[0].waypoints).toBeUndefined()
+
+    expect(canvasReducer(moved, { type: 'reconnectEdge', edgeId, target: BOLETO })).toBe(moved)
+  })
+
+  it('keeps the bend points until they are cleared', () => {
+    const state = canvasReducer(twoCards(), { type: 'connect', source: BOLETO, target: ENDERECO })
+    const bent = canvasReducer(state, { type: 'setWaypoints', edgeId: 'M:0', points: [{ x: 1, y: 2 }] })
+    expect(bent.edges[0].waypoints).toEqual([{ x: 1, y: 2 }])
+    expect(canvasReducer(bent, { type: 'setWaypoints', edgeId: 'M:0', points: [] }).edges[0].waypoints).toBeUndefined()
   })
 })

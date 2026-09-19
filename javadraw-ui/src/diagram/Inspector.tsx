@@ -5,7 +5,7 @@ import type { MethodInfo, Relation } from '../data/types'
 import { parameterTypes, splitSignature } from '../data/format'
 import { EndpointBadge, KindBadge, StereotypePill, VisibilityGlyph } from '../components/Badges'
 import { useI18n } from '../i18n/I18nProvider'
-import { canRemove, edgesOf, relationEdgeId, type CanvasState } from './canvasState'
+import { relationEdgeId, type CanvasState } from './canvasState'
 import { nextSectionValue, visibilityOf, type Visibility } from './members'
 
 interface Props {
@@ -55,8 +55,6 @@ export function Inspector({
   const members = (type.methods ?? []).filter((m) => !m.generated)
   const fieldsVisibility = visibilityOf(node.visibleFields, (type.fields ?? []).map((f) => f.name))
   const methodsVisibility = visibilityOf(node.visibleMethods, members.map((m) => m.id))
-  const relationCount = edgesOf(state, typeId).length
-  const removable = canRemove(state, typeId)
 
   return (
     <aside className="jd-panel jd-scroll flex w-[360px] shrink-0 flex-col overflow-y-auto border-l">
@@ -91,14 +89,9 @@ export function Inspector({
               <Maximize2 size={14} /> {t('inspector.resetSize')}
             </button>
           )}
-          <button
-            className="jd-btn mt-3 w-full justify-center"
-            disabled={!removable}
-            onClick={() => onRemove(typeId)}
-            title={removable ? t('inspector.removeHint') : t('inspector.lockedHint', { count: relationCount })}
-          >
+          <button className="jd-btn mt-3 w-full justify-center" onClick={() => onRemove(typeId)} title={t('inspector.removeHint')}>
             <Trash2 size={14} />
-            {removable ? t('inspector.removeFromDiagram') : t('inspector.locked', { count: relationCount })}
+            {t('inspector.removeFromDiagram')}
           </button>
         </div>
 

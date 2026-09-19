@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { indexGraph } from '../data/graphIndex'
 import type { Graph, MethodInfo, TypeInfo } from '../data/types'
-import type { CanvasState } from './canvasState'
+import { CANVAS_VERSION, type CanvasState } from './canvasState'
 import { toReactFlowEdges, toReactFlowNodes } from './toReactFlow'
 
 const method = (owner: string, name: string): MethodInfo => ({
@@ -41,7 +41,7 @@ const graph: Graph = {
 const index = indexGraph(graph)
 
 const state = (overrides: Partial<CanvasState> = {}): CanvasState => ({
-  version: 1,
+  version: CANVAS_VERSION,
   project: 'test',
   nodes: [
     { id: 'app.Service', position: { x: 0, y: 0 }, visibleFields: ['repo'], visibleMethods: [place.id] },
@@ -63,7 +63,7 @@ describe('toReactFlowNodes', () => {
 })
 
 describe('toReactFlowEdges', () => {
-  const call = { id: 'c', kind: 'CALL' as const, source: 'app.Service', target: 'app.Repo', sourceMember: place.id, targetMember: save.id, line: 12 }
+  const call = { id: 'c', kind: 'CALL' as const, origin: 'graph' as const, source: 'app.Service', target: 'app.Repo', sourceMember: place.id, targetMember: save.id, line: 12 }
 
   it('anchors a call on both method rows, facing each other', () => {
     const [edge] = toReactFlowEdges(state({ edges: [call] }))
@@ -97,14 +97,14 @@ describe('toReactFlowEdges', () => {
 
   it('anchors an association on the field row and keeps the multiplicity label', () => {
     const [edge] = toReactFlowEdges(
-      state({ edges: [{ id: 'a', kind: 'ASSOCIATION', source: 'app.Service', target: 'app.Repo', label: 'repo', multiplicity: '*' }] }),
+      state({ edges: [{ id: 'a', kind: 'ASSOCIATION', origin: 'graph' as const, source: 'app.Service', target: 'app.Repo', label: 'repo', multiplicity: '*' }] }),
     )
     expect(edge.sourceHandle).toBe('f:repo-r')
     expect(edge.data?.label).toBe('*')
   })
 
   it('draws inheritance vertically, from subtype to supertype', () => {
-    const inheritance = state({ edges: [{ id: 'e', kind: 'EXTENDS', source: 'app.Service', target: 'app.Repo' }] })
+    const inheritance = state({ edges: [{ id: 'e', kind: 'EXTENDS', origin: 'graph' as const, source: 'app.Service', target: 'app.Repo' }] })
     inheritance.nodes[1].position = { x: 0, y: -300 }
     const [edge] = toReactFlowEdges(inheritance)
     expect(edge.sourceHandle).toBe('card-t')

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { indexGraph } from '../data/graphIndex'
 import type { Graph, MethodInfo, TypeInfo } from '../data/types'
-import type { CanvasState } from './canvasState'
+import { CANVAS_VERSION, type CanvasState } from './canvasState'
 import { pruneCanvas } from './prune'
+import { migrate } from './useCanvas'
 
 const method = (owner: string, name: string): MethodInfo => ({
   id: `${owner}#${name}()V`,
@@ -44,14 +45,14 @@ const index = indexGraph(graph)
 
 const association = {
   id: 'ASSOCIATION:app.Service->app.Repo:repo',
-  kind: 'ASSOCIATION' as const,
+  kind: 'ASSOCIATION' as const, origin: 'graph' as const,
   source: 'app.Service',
   target: 'app.Repo',
   label: 'repo',
 }
 
 const saved = (overrides: Partial<CanvasState> = {}): CanvasState => ({
-  version: 1,
+  version: CANVAS_VERSION,
   project: 'test',
   nodes: [
     { id: 'app.Service', position: { x: 0, y: 0 }, visibleFields: ['repo'], visibleMethods: [place.id] },
@@ -73,7 +74,7 @@ describe('pruneCanvas', () => {
   it('drops cards whose class is gone, along with their edges', () => {
     const state = saved({
       nodes: [...saved().nodes, { id: 'app.Removed', position: { x: 0, y: 0 }, visibleFields: [], visibleMethods: [] }],
-      edges: [association, { id: 'x', kind: 'DEPENDENCY', source: 'app.Service', target: 'app.Removed' }],
+      edges: [association, { id: 'x', kind: 'DEPENDENCY', origin: 'graph' as const, source: 'app.Service', target: 'app.Removed' }],
     })
     const result = pruneCanvas(state, index)
     expect(result.state.nodes.map((n) => n.id)).toEqual(['app.Service', 'app.Repo'])
@@ -84,7 +85,7 @@ describe('pruneCanvas', () => {
 
   it('drops edges whose relation no longer exists in the bytecode', () => {
     const state = saved({
-      edges: [association, { id: 'CALL:app.Service#gone()V->app.Repo#save()V', kind: 'CALL', source: 'app.Service', target: 'app.Repo' }],
+      edges: [association, { id: 'CALL:app.Service#gone()V->app.Repo#save()V', kind: 'CALL', origin: 'graph' as const, source: 'app.Service', target: 'app.Repo' }],
     })
     const result = pruneCanvas(state, index)
     expect(result.state.edges).toEqual([association])
@@ -99,5 +100,41 @@ describe('pruneCanvas', () => {
     const result = pruneCanvas(state, index)
     expect(result.state.nodes[0]).toMatchObject({ visibleFields: ['repo'], visibleMethods: [] })
     expect(result.droppedTypes).toEqual([])
+  })
+
+  it('keeps a hand-drawn edge: no relation backs it, so none can go missing', () => {
+    const manual = {
+      id: 'M:0',
+      kind: 'MANUAL' as const,
+      origin: 'manual' as const,
+      source: 'app.Service',
+      target: 'app.Repo',
+    }
+    const result = pruneCanvas(saved({ edges: [association, manual] }), index)
+    expect(result.state.edges).toEqual([association, manual])
+    expect(result.droppedEdges).toBe(0)
+  })
+
+  it('drops a hand-drawn edge whose card is gone', () => {
+    const state = saved({
+      edges: [{ id: 'M:0', kind: 'MANUAL', origin: 'manual', source: 'app.Service', target: 'app.Removed' }],
+    })
+    expect(pruneCanvas(state, index).state.edges).toEqual([])
+  })
+})
+
+describe('migrate', () => {
+  it('reads a version 1 diagram, where every edge came from the bytecode', () => {
+    const { origin, ...edgeWithoutOrigin } = association
+    const old = { ...saved(), version: 1, edges: [edgeWithoutOrigin] } as unknown as CanvasState
+    const migrated = migrate(old)
+    expect(migrated.version).toBe(CANVAS_VERSION)
+    expect(migrated.edges.every((e) => e.origin === 'graph')).toBe(true)
+  })
+
+  it('leaves a current diagram alone and refuses one from the future', () => {
+    const current = saved()
+    expect(migrate(current)).toBe(current)
+    expect(() => migrate({ ...current, version: 99 as unknown as typeof CANVAS_VERSION })).toThrow(/version/)
   })
 })

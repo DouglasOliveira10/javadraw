@@ -20,7 +20,6 @@ import { useI18n } from '../i18n/I18nProvider'
 import type { MessageKey } from '../i18n/messages'
 import type { Alignment, Axis } from './align'
 import type { CanvasState } from './canvasState'
-import { canRemove } from './canvasState'
 
 interface Props {
   index: GraphIndex
@@ -57,7 +56,6 @@ export function SelectionPanel({
   onRemove,
 }: Props) {
   const { t } = useI18n()
-  const removable = selectedIds.filter((id) => canRemove(state, id)).length
   const anyMemberShown = state.nodes.some(
     (n) => selectedIds.includes(n.id) && (n.visibleFields.length > 0 || n.visibleMethods.length > 0),
   )
@@ -117,24 +115,10 @@ export function SelectionPanel({
             {anyMemberShown ? <EyeOff size={14} /> : <Eye size={14} />}
             {t(anyMemberShown ? 'selection.hideMembers' : 'selection.showMembers')}
           </button>
-          <button
-            className="jd-btn w-full justify-center"
-            onClick={onRemove}
-            disabled={removable === 0}
-            title={
-              removable === selectedIds.length
-                ? t('selection.removeHint')
-                : t('selection.removePartialHint', { count: selectedIds.length - removable })
-            }
-          >
+          <button className="jd-btn w-full justify-center" onClick={onRemove} title={t('selection.removeHint')}>
             <Trash2 size={14} />
-            {removable === 0
-              ? t('selection.removeLocked')
-              : t('selection.remove', { removable, total: selectedIds.length })}
+            {t('selection.remove', { count: selectedIds.length })}
           </button>
-          {removable > 0 && removable < selectedIds.length && (
-            <p className="text-[11.5px] leading-snug text-[var(--jd-muted)]">{t('selection.keepsNote')}</p>
-          )}
         </section>
 
         <section>
@@ -151,9 +135,6 @@ export function SelectionPanel({
                 >
                   {type && <KindBadge kind={type.kind} size={16} />}
                   <span className="min-w-0 flex-1 truncate">{type?.name ?? id}</span>
-                  {!canRemove(state, id) && (
-                    <span className="text-[10px] text-[var(--jd-faint)]">{t('selection.lockedTag')}</span>
-                  )}
                 </button>
               )
             })}

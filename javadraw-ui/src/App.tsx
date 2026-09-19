@@ -35,7 +35,7 @@ import { ClassPicker } from './diagram/ClassPicker'
 import { Inspector } from './diagram/Inspector'
 import { SelectionPanel } from './diagram/SelectionPanel'
 import { toReactFlowEdges, toReactFlowNodes } from './diagram/toReactFlow'
-import { removeCascading, type XY } from './diagram/canvasState'
+import type { XY } from './diagram/canvasState'
 import { alignPositions, distributePositions, keepTopLeft, type Alignment, type Axis } from './diagram/align'
 import { useCanvas } from './diagram/useCanvas'
 import type { PruneResult } from './diagram/prune'
@@ -206,13 +206,9 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
   )
 
   const removeSelection = useCallback(() => {
-    const { blocked } = removeCascading(state, selectedIds)
     dispatch({ type: 'removeNodes', typeIds: selectedIds })
-    setSelectedIds(blocked)
-    if (blocked.length > 0) {
-      setError(tc('notice.cardsKept', blocked.length))
-    }
-  }, [state, selectedIds, dispatch, tc])
+    setSelectedIds([])
+  }, [selectedIds, dispatch])
 
   return (
     <div className="flex h-full flex-col">

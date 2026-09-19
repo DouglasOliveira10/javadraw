@@ -43,8 +43,22 @@ export function useCanvas(index: GraphIndex) {
 export function parseCanvas(text: string): CanvasState {
   const parsed: unknown = JSON.parse(text)
   if (!isCanvasState(parsed)) throw new Error('Not a JavaDraw diagram file')
-  if (parsed.version !== CANVAS_VERSION) throw new Error(`Unsupported diagram version: ${String(parsed.version)}`)
-  return parsed
+  return migrate(parsed)
+}
+
+/**
+ * Diagrams saved by earlier versions keep working. Version 1 had no hand-drawn edges, so every edge it
+ * carries came from the analyzed bytecode.
+ */
+export function migrate(state: CanvasState): CanvasState {
+  const version = state.version as number
+  if (version === CANVAS_VERSION) return state
+  if (version !== 1) throw new Error(`Unsupported diagram version: ${String(state.version)}`)
+  return {
+    ...state,
+    version: CANVAS_VERSION,
+    edges: state.edges.map((edge) => ({ ...edge, origin: 'graph' })),
+  }
 }
 
 function restore(project: string): CanvasState | null {

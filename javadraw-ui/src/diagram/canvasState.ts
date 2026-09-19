@@ -1,4 +1,5 @@
 import type { CallEdge, Relation, RelationKind } from '../data/types'
+import type { Side } from './handles'
 
 /** Position of a card on the canvas; undefined until it has been placed. */
 export interface XY {
@@ -22,9 +23,27 @@ export interface CanvasNode {
   visibleMethods: string[]
 }
 
+/** 'MANUAL' is a line the user drew; the others are backed by the analyzed bytecode. */
+export type EdgeKind = RelationKind | 'CALL' | 'MANUAL'
+
+export type EdgeLine = 'solid' | 'dashed' | 'dotted'
+export type EdgeMarker = 'none' | 'arrow' | 'triangle' | 'diamond'
+
+/** What the user changed by hand; anything left out falls back to the look of the edge kind. */
+export interface EdgeStyle {
+  line?: EdgeLine
+  startMarker?: EdgeMarker
+  endMarker?: EdgeMarker
+  color?: string
+  /** Free text, in place of the label the relation prints by itself. */
+  text?: string
+}
+
 export interface CanvasEdge {
   id: string
-  kind: RelationKind | 'CALL'
+  kind: EdgeKind
+  /** A manual edge has no relation behind it, so it survives a re-analysis of the project. */
+  origin: 'graph' | 'manual'
   source: string
   target: string
   /** Method id the arrow starts from, for calls. */
@@ -35,9 +54,14 @@ export interface CanvasEdge {
   label?: string
   multiplicity?: string
   line?: number
+  /** Sides pinned by the user; without them the sides follow where the cards sit. */
+  anchors?: { source?: Side; target?: Side }
+  style?: EdgeStyle
+  /** Bend points, in canvas coordinates, between source and target. */
+  waypoints?: XY[]
 }
 
-export const CANVAS_VERSION = 1
+export const CANVAS_VERSION = 2
 
 export interface CanvasState {
   version: typeof CANVAS_VERSION
@@ -53,6 +77,13 @@ export type CanvasAction =
   /** No UI creates these today (method-to-method edges are disabled); saved diagrams still carry them. */
   | { type: 'addCall'; call: CallEdge; position?: XY }
   | { type: 'removeNode'; typeId: string }
+  /** A line the user drew, from any card to any other one, with or without a relation behind it. */
+  | { type: 'connect'; source: string; target: string; sourceSide?: Side; targetSide?: Side }
+  | { type: 'removeEdges'; edgeIds: string[] }
+  /** Merges into the edge style; a property set to undefined goes back to the kind's default. */
+  | { type: 'styleEdge'; edgeId: string; style: EdgeStyle }
+  | { type: 'reconnectEdge'; edgeId: string; source?: string; target?: string; sourceSide?: Side; targetSide?: Side }
+  | { type: 'setWaypoints'; edgeId: string; points: XY[] }
   | { type: 'toggleField'; typeId: string; field: string; visible?: boolean }
   | { type: 'toggleMethod'; typeId: string; methodId: string; visible?: boolean }
   | { type: 'moveNode'; typeId: string; position: XY }
@@ -60,7 +91,6 @@ export type CanvasAction =
   /** Back to sizing itself by content. */
   | { type: 'autoSizeNode'; typeId: string }
   | { type: 'setPositions'; positions: Record<string, XY> }
-  /** Cascading removal: whatever is left holding two or more relations stays. */
   | { type: 'removeNodes'; typeIds: string[] }
   /** Replaces the revealed members of several cards at once (empty lists hide everything). */
   | { type: 'setMembers'; members: Record<string, { fields: string[]; methods: string[] }> }
@@ -87,9 +117,10 @@ export function edgesOf(state: CanvasState, typeId: string): CanvasEdge[] {
   return state.edges.filter((e) => e.source === typeId || e.target === typeId)
 }
 
-/** A card can only be removed while it holds the diagram together by at most one relation. */
-export function canRemove(state: CanvasState, typeId: string): boolean {
-  return edgesOf(state, typeId).length <= 1
+/** Ids of hand-drawn edges are numbered, so two lines between the same pair of cards stay apart. */
+export function manualEdgeId(state: CanvasState): string {
+  const used = state.edges.map((e) => Number(/^M:(\d+)$/.exec(e.id)?.[1] ?? -1))
+  return `M:${Math.max(-1, ...used) + 1}`
 }
 
 export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasState {
@@ -108,6 +139,7 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
       return withEdge(next, {
         id: relationEdgeId(relation),
         kind: relation.kind,
+        origin: 'graph',
         source: relation.source,
         target: relation.target,
         label: relation.label,
@@ -126,6 +158,7 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
       return withEdge(next, {
         id: callEdgeId(call),
         kind: 'CALL',
+        origin: 'graph',
         source,
         target,
         sourceMember: call.source,
@@ -134,11 +167,67 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
       })
     }
 
-    case 'removeNode':
-      return canRemove(state, action.typeId) ? removeOne(state, action.typeId) : state
+    case 'connect': {
+      if (action.source === action.target) return state
+      if (!state.nodes.some((n) => n.id === action.source) || !state.nodes.some((n) => n.id === action.target)) return state
+      return withEdge(state, {
+        id: manualEdgeId(state),
+        kind: 'MANUAL',
+        origin: 'manual',
+        source: action.source,
+        target: action.target,
+        anchors: anchorsOf(action.sourceSide, action.targetSide),
+      })
+    }
 
-    case 'removeNodes':
-      return removeCascading(state, action.typeIds).state
+    case 'removeEdges': {
+      const dropped = new Set(action.edgeIds)
+      const edges = state.edges.filter((e) => !dropped.has(e.id))
+      return edges.length === state.edges.length ? state : { ...state, edges }
+    }
+
+    case 'styleEdge':
+      return mapEdge(state, action.edgeId, (edge) => {
+        const style = clean({ ...edge.style, ...action.style })
+        return { ...edge, style }
+      })
+
+    case 'reconnectEdge':
+      return mapEdge(state, action.edgeId, (edge) => {
+        const source = action.source ?? edge.source
+        const target = action.target ?? edge.target
+        if (source === target) return edge
+        const anchors = anchorsOf(
+          action.source || action.sourceSide ? action.sourceSide : edge.anchors?.source,
+          action.target || action.targetSide ? action.targetSide : edge.anchors?.target,
+        )
+        // The member anchors described the old endpoints; a moved end points at the card again.
+        return {
+          ...edge,
+          source,
+          target,
+          anchors,
+          sourceMember: action.source ? undefined : edge.sourceMember,
+          targetMember: action.target ? undefined : edge.targetMember,
+          waypoints: undefined,
+        }
+      })
+
+    case 'setWaypoints':
+      return mapEdge(state, action.edgeId, (edge) => ({
+        ...edge,
+        waypoints: action.points.length > 0 ? action.points : undefined,
+      }))
+
+    case 'removeNode':
+      return removeOne(state, action.typeId)
+
+    case 'removeNodes': {
+      const dropped = new Set(action.typeIds)
+      const nodes = state.nodes.filter((n) => !dropped.has(n.id))
+      if (nodes.length === state.nodes.length) return state
+      return { ...state, nodes, edges: state.edges.filter((e) => !dropped.has(e.source) && !dropped.has(e.target)) }
+    }
 
     case 'setMembers': {
       let next = state
@@ -192,23 +281,14 @@ export function canvasReducer(state: CanvasState, action: CanvasAction): CanvasS
   }
 }
 
-/**
- * Removes as many of the given cards as the "at most one relation" rule allows, taking leaves first, so a
- * whole branch can go at once. Returns the cards that stayed behind.
- */
-export function removeCascading(state: CanvasState, typeIds: string[]): { state: CanvasState; blocked: string[] } {
-  const pending = new Set(typeIds.filter((id) => state.nodes.some((n) => n.id === id)))
-  let next = state
-  for (let removed = true; removed; ) {
-    removed = false
-    for (const id of pending) {
-      if (!canRemove(next, id)) continue
-      next = removeOne(next, id)
-      pending.delete(id)
-      removed = true
-    }
-  }
-  return { state: next, blocked: [...pending] }
+function anchorsOf(source?: Side, target?: Side): CanvasEdge['anchors'] {
+  return source || target ? { source, target } : undefined
+}
+
+/** Drops the properties the user reset, so an empty style object never reaches storage. */
+function clean(style: EdgeStyle): EdgeStyle | undefined {
+  const entries = Object.entries(style).filter(([, value]) => value !== undefined && value !== '')
+  return entries.length > 0 ? (Object.fromEntries(entries) as EdgeStyle) : undefined
 }
 
 function removeOne(state: CanvasState, typeId: string): CanvasState {
@@ -227,6 +307,17 @@ function withNode(state: CanvasState, typeId: string, position?: XY): CanvasStat
 function withEdge(state: CanvasState, edge: CanvasEdge): CanvasState {
   if (state.edges.some((e) => e.id === edge.id)) return state
   return { ...state, edges: [...state.edges, edge] }
+}
+
+function mapEdge(state: CanvasState, edgeId: string, map: (edge: CanvasEdge) => CanvasEdge): CanvasState {
+  let changed = false
+  const edges = state.edges.map((e) => {
+    if (e.id !== edgeId) return e
+    const mapped = map(e)
+    changed = mapped !== e
+    return mapped
+  })
+  return changed ? { ...state, edges } : state
 }
 
 /** Returns the same state object when the node is unchanged, so React can skip the re-render. */
