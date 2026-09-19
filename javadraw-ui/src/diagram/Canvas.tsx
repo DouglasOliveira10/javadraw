@@ -9,6 +9,7 @@ import {
   ViewportPortal,
   getNodesBounds,
   getViewportForBounds,
+  useEdgesState,
   useNodesInitialized,
   useNodesState,
   useReactFlow,
@@ -35,24 +36,45 @@ const edgeTypes = { relation: RelationEdge }
 /** Middle and right mouse button drag the canvas; the left button draws a selection box. */
 const PAN_BUTTONS = [1, 2]
 
+export interface Selection {
+  nodes: string[]
+  edges: string[]
+}
+
 interface Props {
   nodes: Node[]
   edges: Edge[]
   dark: boolean
   selectedIds: string[]
+  selectedEdgeIds: string[]
   showMinimap: boolean
-  onSelectionChange: (ids: string[]) => void
+  onSelectionChange: (selection: Selection) => void
   onMove: (positions: Record<string, XY>) => void
   onResize: (typeId: string, size: Size) => void
+  onRemoveNodes: (typeIds: string[]) => void
+  onRemoveEdges: (edgeIds: string[]) => void
 }
 
-export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelectionChange, onMove, onResize }: Props) {
+export function Canvas({
+  nodes,
+  edges,
+  dark,
+  selectedIds,
+  selectedEdgeIds,
+  showMinimap,
+  onSelectionChange,
+  onMove,
+  onResize,
+  onRemoveNodes,
+  onRemoveEdges,
+}: Props) {
   const cardActions = useMemo(() => ({ resize: onResize }), [onResize])
   const palette = usePalette()
   const minimapColor = useCallback((node: Node) => accentOf((node.data as { type?: TypeInfo }).type, palette), [palette])
   const { getNode, fitView } = useReactFlow()
   // Mounting already selected avoids React Flow reporting an empty selection back and fighting the canvas state.
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState(withSelection(nodes, selectedIds, getNode))
+  const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState(withEdgeSelection(edges, selectedEdgeIds))
   const initialized = useNodesInitialized()
   const fitted = useRef(false)
   const panning = useSpacePan()
@@ -74,17 +96,26 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
     })
   }, [nodes, selectedIds, initialized, getNode, setRfNodes])
 
+  useEffect(() => {
+    setRfEdges((previous) => {
+      const next = withEdgeSelection(edges, selectedEdgeIds)
+      return sameEdges(previous, next) ? previous : next
+    })
+  }, [edges, selectedEdgeIds, setRfEdges])
+
   /** Double click frames the card, so a crowded diagram can be read one card at a time. */
   const onNodeDoubleClick: NodeMouseHandler = (_, node) => {
     void fitView({ nodes: [{ id: node.id }], padding: 0.25, maxZoom: 2, duration: 400 })
   }
 
   const onNodeClick: NodeMouseHandler = (event, node) => {
-    onSelectionChange(event.shiftKey || event.metaKey ? toggleId(selectedIds, node.id) : [node.id])
+    const picked = event.shiftKey || event.metaKey ? toggleId(selectedIds, node.id) : [node.id]
+    onSelectionChange({ nodes: picked, edges: [] })
   }
 
   const handleSelectionChange = useCallback(
-    ({ nodes: selected }: OnSelectionChangeParams) => onSelectionChange(selected.map((n) => n.id)),
+    ({ nodes: pickedNodes, edges: pickedEdges }: OnSelectionChangeParams) =>
+      onSelectionChange({ nodes: pickedNodes.map((n) => n.id), edges: pickedEdges.map((e) => e.id) }),
     [onSelectionChange],
   )
 
@@ -101,14 +132,17 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
         <ReactFlow
           nodes={rfNodes}
           onNodesChange={onNodesChange}
-          edges={edges}
+          edges={rfEdges}
+          onEdgesChange={onEdgesChange}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           colorMode={dark ? 'dark' : 'light'}
           minZoom={0.1}
           maxZoom={2.5}
           nodesConnectable={false}
-          deleteKeyCode={null}
+          deleteKeyCode={['Delete', 'Backspace']}
+          onNodesDelete={(deleted) => onRemoveNodes(deleted.map((n) => n.id))}
+          onEdgesDelete={(deleted) => onRemoveEdges(deleted.map((e) => e.id))}
           elevateNodesOnSelect={false}
           proOptions={{ hideAttribution: true }}
           panOnDrag={PAN_BUTTONS}
@@ -120,7 +154,7 @@ export function Canvas({ nodes, edges, dark, selectedIds, showMinimap, onSelecti
           onSelectionChange={handleSelectionChange}
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
-          onPaneClick={() => onSelectionChange([])}
+          onPaneClick={() => onSelectionChange({ nodes: [], edges: [] })}
           onNodeDragStop={(_, node, dragged) => persistPositions(dragged.length > 0 ? dragged : [node])}
           onSelectionDragStop={(_, dragged) => persistPositions(dragged)}
         >
@@ -143,6 +177,15 @@ function withSelection(nodes: Node[], selectedIds: string[], getNode: (id: strin
     const measured = getNode(node.id)?.measured
     return { ...node, selected: selection.has(node.id), ...(measured?.width ? { measured } : {}) }
   })
+}
+
+function withEdgeSelection(edges: Edge[], selectedEdgeIds: string[]): Edge[] {
+  const selection = new Set(selectedEdgeIds)
+  return edges.map((edge) => (edge.selected === selection.has(edge.id) ? edge : { ...edge, selected: selection.has(edge.id) }))
+}
+
+function sameEdges(a: Edge[], b: Edge[]): boolean {
+  return a.length === b.length && a.every((edge, i) => edge === b[i])
 }
 
 function sameNodes(a: Node[], b: Node[]): boolean {

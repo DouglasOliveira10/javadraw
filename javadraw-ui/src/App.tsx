@@ -26,12 +26,13 @@ import type { Relation } from './data/types'
 import { useI18n, type I18n } from './i18n/I18nProvider'
 import { LOCALES } from './i18n/messages'
 import { arrangePositions } from './layout/arrange'
-import { Canvas, useExportPng } from './diagram/Canvas'
+import { Canvas, useExportPng, type Selection } from './diagram/Canvas'
 import { Menu, MenuItem, MenuSeparator, MenuSubmenu, MenuToggle } from './components/Menu'
 import { prefersDark, useStoredFlag } from './data/preferences'
 import { PaletteProvider, usePaletteState } from './data/palette'
 import { ColorMenu } from './components/ColorMenu'
 import { ClassPicker } from './diagram/ClassPicker'
+import { EdgeInspector } from './diagram/EdgeInspector'
 import { Inspector } from './diagram/Inspector'
 import { SelectionPanel } from './diagram/SelectionPanel'
 import { toReactFlowEdges, toReactFlowNodes } from './diagram/toReactFlow'
@@ -63,6 +64,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
   const [showReturnTypes, setShowReturnTypes] = useStoredFlag('javadraw.returnTypes', () => true)
   const { exportPng, busy: exportingPng } = useExportPng(`${project}-diagram`)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [selectedEdgeIds, setSelectedEdgeIds] = useState<string[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
   const importInput = useRef<HTMLInputElement>(null)
   const [error, setError] = useState<string | undefined>(() => describePruning(restored, t))
@@ -77,11 +79,15 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
   const empty = state.nodes.length === 0
 
   const selectedId = selectedIds.length === 1 ? selectedIds[0] : null
+  const selectedEdgeId = selectedIds.length === 0 && selectedEdgeIds.length === 1 ? selectedEdgeIds[0] : null
 
   /** React Flow reports the same selection again after we push it back; ignore those. */
-  const selectionChanged = useCallback((ids: string[]) => {
-    setSelectedIds((current) => (sameIds(current, ids) ? current : ids))
+  const selectionChanged = useCallback((selection: Selection) => {
+    setSelectedIds((current) => (sameIds(current, selection.nodes) ? current : selection.nodes))
+    setSelectedEdgeIds((current) => (sameIds(current, selection.edges) ? current : selection.edges))
   }, [])
+
+  const clearSelection = useCallback(() => selectionChanged({ nodes: [], edges: [] }), [selectionChanged])
 
   const boxOf = useCallback(
     (typeId: string): Box | undefined => {
@@ -145,6 +151,22 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
     (typeId: string) => {
       dispatch({ type: 'removeNode', typeId })
       setSelectedIds((current) => current.filter((id) => id !== typeId))
+    },
+    [dispatch],
+  )
+
+  const removeNodes = useCallback(
+    (typeIds: string[]) => {
+      dispatch({ type: 'removeNodes', typeIds })
+      setSelectedIds((current) => current.filter((id) => !typeIds.includes(id)))
+    },
+    [dispatch],
+  )
+
+  const removeEdges = useCallback(
+    (edgeIds: string[]) => {
+      dispatch({ type: 'removeEdges', edgeIds })
+      setSelectedEdgeIds((current) => current.filter((id) => !edgeIds.includes(id)))
     },
     [dispatch],
   )
@@ -303,10 +325,13 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
             edges={edges}
             dark={dark}
             selectedIds={selectedIds}
+            selectedEdgeIds={selectedEdgeIds}
             showMinimap={showMinimap && !empty}
             onSelectionChange={selectionChanged}
             onMove={(positions) => dispatch({ type: 'setPositions', positions })}
             onResize={(typeId, size) => dispatch({ type: 'resizeNode', typeId, size })}
+            onRemoveNodes={removeNodes}
+            onRemoveEdges={removeEdges}
           />
           {empty && <EmptyCanvas />}
         </main>
@@ -316,7 +341,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
             index={index}
             state={state}
             selectedIds={selectedIds}
-            onClose={() => setSelectedIds([])}
+            onClose={clearSelection}
             onSelect={(id) => setSelectedIds([id])}
             onAlign={alignSelection}
             onDistribute={distributeSelection}
@@ -326,12 +351,23 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
           />
         )}
 
+        {selectedEdgeId && (
+          <EdgeInspector
+            index={index}
+            state={state}
+            edgeId={selectedEdgeId}
+            onClose={clearSelection}
+            onSelectNode={(id) => selectionChanged({ nodes: [id], edges: [] })}
+            onRemove={(id) => removeEdges([id])}
+          />
+        )}
+
         {selectedId && onCanvas.has(selectedId) && (
           <Inspector
             index={index}
             state={state}
             typeId={selectedId}
-            onClose={() => setSelectedIds([])}
+            onClose={clearSelection}
             onSelect={(id) => onCanvas.has(id) && setSelectedIds([id])}
             onAddRelation={addRelation}
             onToggleField={(typeId, field) => dispatch({ type: 'toggleField', typeId, field })}

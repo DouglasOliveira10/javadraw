@@ -92,6 +92,16 @@ export const en = {
   'inspector.usesCaption': 'uses',
   'inspector.fieldCaption': 'field',
 
+  'edge.title': 'Edge',
+  'edge.remove': 'Remove edge',
+  'edge.removeHint': 'Remove this edge from the diagram',
+  'edgeKind.EXTENDS': 'Inheritance',
+  'edgeKind.IMPLEMENTS': 'Interface',
+  'edgeKind.ASSOCIATION': 'Field',
+  'edgeKind.DEPENDENCY': 'Dependency',
+  'edgeKind.CALL': 'Call',
+  'edgeKind.MANUAL': 'Hand-drawn',
+
   'selection.title': '{count} cards selected',
   'selection.clear': 'Clear selection',
   'selection.align': 'Align',
@@ -214,6 +224,16 @@ export const ptBR: Record<MessageKey, string> = {
   'inspector.implementedBy': 'implementada por',
   'inspector.usesCaption': 'usa',
   'inspector.fieldCaption': 'campo',
+
+  'edge.title': 'Aresta',
+  'edge.remove': 'Remover aresta',
+  'edge.removeHint': 'Remove esta aresta do diagrama',
+  'edgeKind.EXTENDS': 'Herança',
+  'edgeKind.IMPLEMENTS': 'Interface',
+  'edgeKind.ASSOCIATION': 'Campo',
+  'edgeKind.DEPENDENCY': 'Dependência',
+  'edgeKind.CALL': 'Chamada',
+  'edgeKind.MANUAL': 'Desenhada à mão',
 
   'selection.title': '{count} cartões selecionados',
   'selection.clear': 'Limpar seleção',
