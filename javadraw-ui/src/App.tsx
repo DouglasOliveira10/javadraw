@@ -332,6 +332,7 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
             onResize={(typeId, size) => dispatch({ type: 'resizeNode', typeId, size })}
             onRemoveNodes={removeNodes}
             onRemoveEdges={removeEdges}
+            onConnect={(connection) => dispatch({ type: 'connect', ...connection })}
           />
           {empty && <EmptyCanvas />}
         </main>

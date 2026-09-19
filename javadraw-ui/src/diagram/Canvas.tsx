@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Background,
   BackgroundVariant,
+  ConnectionMode,
   Controls,
   MiniMap,
   ReactFlow,
@@ -13,6 +14,7 @@ import {
   useNodesInitialized,
   useNodesState,
   useReactFlow,
+  type Connection,
   type Edge,
   type Node,
   type NodeMouseHandler,
@@ -27,6 +29,7 @@ import { CanvasCard } from './CanvasCard'
 import { RelationEdge } from './RelationEdge'
 import { EdgeMarkers } from './EdgeMarkers'
 import { markerColours } from './edgeLook'
+import { sideOfHandle, type Side } from './handles'
 import type { CanvasEdgeData } from './toReactFlow'
 import { EdgeThemeProvider } from './EdgeTheme'
 import { CardActionsProvider } from './CardActions'
@@ -55,6 +58,8 @@ interface Props {
   onResize: (typeId: string, size: Size) => void
   onRemoveNodes: (typeIds: string[]) => void
   onRemoveEdges: (edgeIds: string[]) => void
+  /** A line pulled from one card to another, with the sides it was drawn between. */
+  onConnect: (connection: { source: string; target: string; sourceSide?: Side; targetSide?: Side }) => void
 }
 
 export function Canvas({
@@ -69,7 +74,9 @@ export function Canvas({
   onResize,
   onRemoveNodes,
   onRemoveEdges,
+  onConnect,
 }: Props) {
+  const [connecting, setConnecting] = useState(false)
   const cardActions = useMemo(() => ({ resize: onResize }), [onResize])
   const palette = usePalette()
   const edgeColours = useMemo(
@@ -125,6 +132,20 @@ export function Canvas({
     [onSelectionChange],
   )
 
+  const handleConnect = useCallback(
+    (connection: Connection) => {
+      setConnecting(false)
+      if (!connection.source || !connection.target || connection.source === connection.target) return
+      onConnect({
+        source: connection.source,
+        target: connection.target,
+        sourceSide: sideOfHandle(connection.sourceHandle),
+        targetSide: sideOfHandle(connection.targetHandle),
+      })
+    },
+    [onConnect],
+  )
+
   const persistPositions = (dragged: Node[]) => {
     const positions: Record<string, XY> = {}
     for (const node of dragged) positions[node.id] = node.position
@@ -134,7 +155,10 @@ export function Canvas({
   return (
     <EdgeThemeProvider dark={dark}>
       <CardActionsProvider value={cardActions}>
-      <div className={`h-full w-full ${panning ? 'jd-panning' : ''}`} onContextMenu={(e) => e.preventDefault()}>
+      <div
+        className={`h-full w-full ${panning ? 'jd-panning' : ''} ${connecting ? 'jd-connecting' : ''}`}
+        onContextMenu={(e) => e.preventDefault()}
+      >
         <ReactFlow
           nodes={rfNodes}
           onNodesChange={onNodesChange}
@@ -145,7 +169,13 @@ export function Canvas({
           colorMode={dark ? 'dark' : 'light'}
           minZoom={0.1}
           maxZoom={2.5}
-          nodesConnectable={false}
+          nodesConnectable
+          connectionMode={ConnectionMode.Loose}
+          connectionRadius={28}
+          isValidConnection={(connection) => connection.source !== connection.target}
+          onConnectStart={() => setConnecting(true)}
+          onConnectEnd={() => setConnecting(false)}
+          onConnect={handleConnect}
           deleteKeyCode={['Delete', 'Backspace']}
           onNodesDelete={(deleted) => onRemoveNodes(deleted.map((n) => n.id))}
           onEdgesDelete={(deleted) => onRemoveEdges(deleted.map((e) => e.id))}

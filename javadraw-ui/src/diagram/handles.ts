@@ -14,6 +14,12 @@ export function methodHandle(methodId: string, side: Side): string {
   return `m:${methodId}-${side}`
 }
 
+/** Reads back the side a handle sits on, for a line the user just drew. */
+export function sideOfHandle(handleId: string | null | undefined): Side | undefined {
+  const side = handleId?.slice(-1)
+  return side === 'l' || side === 'r' || side === 't' || side === 'b' ? side : undefined
+}
+
 /**
  * Picks the sides that make the arrow travel the shortest way between two cards: sideways normally, but
  * top/bottom for cards stacked almost vertically, so the line does not loop around them.

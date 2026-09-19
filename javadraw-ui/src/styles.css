@@ -121,6 +121,7 @@ body {
   }
 }
 
+/* Anchor points for the arrows: they place the line, they are not meant to be seen or grabbed. */
 .jd-handle {
   opacity: 0;
   width: 1px !important;
@@ -129,6 +130,33 @@ body {
   min-height: 0 !important;
   border: 0 !important;
   pointer-events: none;
+}
+
+/* The four dots on the border of a card, to pull a new line out of it. */
+.jd-port {
+  opacity: 0;
+  width: 11px !important;
+  height: 11px !important;
+  border: 2px solid var(--jd-surface) !important;
+  background: var(--jd-accent) !important;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.react-flow__node:hover .jd-port,
+.react-flow__node.selected .jd-port {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.jd-port:hover {
+  transform: scale(1.25);
+}
+
+/* While a line is being pulled, every card shows where it can land. */
+.jd-connecting .jd-port {
+  opacity: 1;
+  pointer-events: all;
 }
 
 /* ------------------------------------------------------------------ Cards */

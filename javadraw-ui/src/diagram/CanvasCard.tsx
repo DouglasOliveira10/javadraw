@@ -23,9 +23,24 @@ function RowHandles({ id }: { id: (side: Side) => string }) {
     <>
       {SIDES.map(({ side, position }) => (
         <span key={side}>
-          <Handle type="source" id={id(side)} position={position} className="jd-handle" />
-          <Handle type="target" id={id(side)} position={position} className="jd-handle" />
+          <Handle type="source" id={id(side)} position={position} className="jd-handle" isConnectable={false} />
+          <Handle type="target" id={id(side)} position={position} className="jd-handle" isConnectable={false} />
         </span>
+      ))}
+    </>
+  )
+}
+
+/**
+ * The dots on the border, one per side, that a new line is pulled from and dropped on — the canvas runs
+ * in loose connection mode, so one handle per side serves both ends. They sit outside the card box,
+ * which clips whatever it contains, and they double as the anchor for edges tied to no member.
+ */
+function Ports() {
+  return (
+    <>
+      {SIDES.map(({ side, position }) => (
+        <Handle key={side} type="source" id={cardHandle(side)} position={position} className="jd-port" />
       ))}
     </>
   )
@@ -76,8 +91,8 @@ function CanvasCardComponent({ id, data, selected }: NodeProps<Node<CardData>>) 
         handleClassName="jd-resize-handle"
         onResizeEnd={(_, params) => resize(id, { width: Math.round(params.width), height: Math.round(params.height) })}
       />
+      <Ports />
       <div className={classes} style={{ '--accent': accentOf(type, palette) } as CSSProperties}>
-        <RowHandles id={cardHandle} />
 
         <div className="flex items-start gap-2 px-3 pb-2 pt-2">
           <KindBadge kind={type.kind} abstract={abstract} />
