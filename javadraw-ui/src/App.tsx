@@ -535,9 +535,6 @@ function DiagramMenu({
 
   return (
     <Menu trigger={<MenuIcon size={16} />} title={t('app.diagramMenu')}>
-      <MenuItem icon={<Undo2 size={14} />} label={t('menu.undo')} hint={UNDO_KEYS} disabled={!canUndo} onSelect={onUndo} />
-      <MenuItem icon={<Redo2 size={14} />} label={t('menu.redo')} hint={REDO_KEYS} disabled={!canRedo} onSelect={onRedo} />
-      <MenuSeparator />
       <MenuItem
         icon={<Plus size={14} />}
         label={t(pickerOpen ? 'menu.hideClassPicker' : 'menu.addClass')}
@@ -575,6 +572,9 @@ function DiagramMenu({
       <MenuSeparator />
       <MenuToggle icon={<Map size={14} />} label={t('menu.showMinimap')} checked={showMinimap} onChange={onToggleMinimap} />
       <MenuItem icon={<LayoutGrid size={14} />} label={t('menu.autoArrange')} disabled={!canArrange} onSelect={onAutoArrange} />
+      <MenuSeparator />
+      <MenuItem icon={<Undo2 size={14} />} label={t('menu.undo')} hint={UNDO_KEYS} disabled={!canUndo} onSelect={onUndo} />
+      <MenuItem icon={<Redo2 size={14} />} label={t('menu.redo')} hint={REDO_KEYS} disabled={!canRedo} onSelect={onRedo} />
     </Menu>
   )
 }
