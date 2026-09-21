@@ -15,3 +15,4 @@
 - [x] 9 - o exportar png nao ta renderizando as arestas
 - [ ] 10 - Exporta as mermaid
 - [x] 11 - validar methods -> calls (ver se faz sentido manter isso, pq ta edges estranhas) se eu usar used by junto cria duas edges, travando a exclusao — resolvido desabilitando a criacao de edge metodo->metodo; o modelo segue suportando, sem UI para criar
+- [x] 12 - criar comando de desfazer / refazer (as vezes movos um card sem querer, queria um botao de desfazer para voltar a posiçao original) 

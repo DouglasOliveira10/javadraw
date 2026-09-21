@@ -2,6 +2,7 @@ import { useCallback, useEffect, useReducer, useState } from 'react'
 import type { GraphIndex } from '../data/graphIndex'
 import { CANVAS_VERSION, canvasReducer, emptyCanvas, type CanvasAction, type CanvasEdge, type CanvasState, type EdgeAnchor } from './canvasState'
 import { pruneCanvas, type PruneResult } from './prune'
+import { canRedo, canUndo, initialHistory, record, redo, undo, type History } from './history'
 
 function storageKey(project: string): string {
   return `javadraw.diagram.${project}`
@@ -15,7 +16,8 @@ export function useCanvas(index: GraphIndex) {
     const stored = restore(project)
     return stored ? pruneCanvas(stored, index) : null
   })
-  const [state, dispatch] = useReducer(canvasReducer, restored?.state ?? emptyCanvas(project))
+  const [history, dispatch] = useReducer(historyReducer, restored?.state ?? emptyCanvas(project), initialHistory)
+  const state = history.present
 
   useEffect(() => {
     try {
@@ -37,7 +39,40 @@ export function useCanvas(index: GraphIndex) {
     [index],
   )
 
-  return { state, dispatch: dispatch as (action: CanvasAction) => void, exportJson, importJson, restored }
+  return {
+    state,
+    dispatch: dispatch as (action: CanvasAction) => void,
+    exportJson,
+    importJson,
+    restored,
+    undo: useCallback(() => dispatch({ type: 'undo' }), []),
+    redo: useCallback(() => dispatch({ type: 'redo' }), []),
+    canUndo: canUndo(history),
+    canRedo: canRedo(history),
+  }
+}
+
+type HistoryAction = CanvasAction | { type: 'undo' } | { type: 'redo' }
+
+function historyReducer(history: History<CanvasState>, action: HistoryAction): History<CanvasState> {
+  if (action.type === 'undo') return undo(history)
+  if (action.type === 'redo') return redo(history)
+  return record(history, canvasReducer(history.present, action), gestureOf(action))
+}
+
+/**
+ * Edits that arrive as a stream share a tag, so the whole gesture is one step back: every keystroke in a
+ * label, every colour the picker reports while the mouse is down, every size while a card is resized.
+ */
+function gestureOf(action: CanvasAction): string | undefined {
+  switch (action.type) {
+    case 'styleEdge':
+      return `style:${action.edgeId}:${Object.keys(action.style).join(',')}`
+    case 'resizeNode':
+      return `resize:${action.typeId}`
+    default:
+      return undefined
+  }
 }
 
 export function parseCanvas(text: string): CanvasState {

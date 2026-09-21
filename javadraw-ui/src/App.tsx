@@ -13,10 +13,12 @@ import {
   Palette,
   Parentheses,
   Plus,
+  Redo2,
   Save,
   Sun,
   Trash2,
   Type,
+  Undo2,
   Upload,
   X,
 } from 'lucide-react'
@@ -56,7 +58,7 @@ export function App({ index }: { index: GraphIndex }) {
 function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteControls }) {
   const { t, tc } = useI18n()
   const project = index.graph.meta.name
-  const { state, dispatch, exportJson, importJson, restored } = useCanvas(index)
+  const { state, dispatch, exportJson, importJson, restored, undo, redo, canUndo, canRedo } = useCanvas(index)
   const [dark, setDark] = useDarkMode()
   const [showMinimap, setShowMinimap] = useStoredFlag('javadraw.minimap', () => true)
   const [showFieldTypes, setShowFieldTypes] = useStoredFlag('javadraw.fieldTypes', () => true)
@@ -88,6 +90,16 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
   }, [])
 
   const clearSelection = useCallback(() => selectionChanged({ nodes: [], edges: [] }), [selectionChanged])
+
+  useUndoShortcuts(undo, redo)
+
+  // Undo can take away what was selected; dropping those ids keeps the panels honest.
+  useEffect(() => {
+    const cards = new Set(state.nodes.map((n) => n.id))
+    const edges = new Set(state.edges.map((e) => e.id))
+    setSelectedIds((current) => (current.every((id) => cards.has(id)) ? current : current.filter((id) => cards.has(id))))
+    setSelectedEdgeIds((current) => (current.every((id) => edges.has(id)) ? current : current.filter((id) => edges.has(id))))
+  }, [state])
 
   const boxOf = useCallback(
     (typeId: string): Box | undefined => {
@@ -237,6 +249,10 @@ function Workspace({ index, palette }: { index: GraphIndex; palette: PaletteCont
       <header className="jd-panel flex h-12 shrink-0 items-center gap-3 border-b px-3">
         <DiagramMenu
           empty={empty}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={undo}
+          onRedo={redo}
           canArrange={state.nodes.length >= 2}
           pickerOpen={pickerOpen}
           showMinimap={showMinimap}
@@ -460,6 +476,10 @@ function EmptyCanvas() {
 
 interface MenuProps {
   empty: boolean
+  canUndo: boolean
+  canRedo: boolean
+  onUndo: () => void
+  onRedo: () => void
   canArrange: boolean
   pickerOpen: boolean
   showMinimap: boolean
@@ -482,6 +502,10 @@ interface MenuProps {
 
 function DiagramMenu({
   empty,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
   canArrange,
   pickerOpen,
   showMinimap,
@@ -511,6 +535,9 @@ function DiagramMenu({
 
   return (
     <Menu trigger={<MenuIcon size={16} />} title={t('app.diagramMenu')}>
+      <MenuItem icon={<Undo2 size={14} />} label={t('menu.undo')} hint={UNDO_KEYS} disabled={!canUndo} onSelect={onUndo} />
+      <MenuItem icon={<Redo2 size={14} />} label={t('menu.redo')} hint={REDO_KEYS} disabled={!canRedo} onSelect={onRedo} />
+      <MenuSeparator />
       <MenuItem
         icon={<Plus size={14} />}
         label={t(pickerOpen ? 'menu.hideClassPicker' : 'menu.addClass')}
@@ -550,6 +577,28 @@ function DiagramMenu({
       <MenuItem icon={<LayoutGrid size={14} />} label={t('menu.autoArrange')} disabled={!canArrange} onSelect={onAutoArrange} />
     </Menu>
   )
+}
+
+const APPLE = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+const UNDO_KEYS = APPLE ? '\u2318Z' : 'Ctrl+Z'
+const REDO_KEYS = APPLE ? '\u21e7\u2318Z' : 'Ctrl+Y'
+
+/** The usual keys, as long as the typing is not going into a field. */
+function useUndoShortcuts(onUndo: () => void, onRedo: () => void) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.altKey) return
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return
+      const key = event.key.toLowerCase()
+      if (key !== 'z' && key !== 'y') return
+      event.preventDefault()
+      if (key === 'y' || event.shiftKey) onRedo()
+      else onUndo()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onUndo, onRedo])
 }
 
 function downloadJson(fileName: string, json: string) {

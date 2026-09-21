@@ -20,6 +20,8 @@ export const en = {
   'app.relations_one': '{count} relation',
   'app.relations_other': '{count} relations',
 
+  'menu.undo': 'Undo',
+  'menu.redo': 'Redo',
   'menu.addClass': 'Add class',
   'menu.hideClassPicker': 'Hide class picker',
   'menu.addClassHint': 'Add a class that has no relation with the diagram',
@@ -172,6 +174,8 @@ export const ptBR: Record<MessageKey, string> = {
   'app.relations_one': '{count} relação',
   'app.relations_other': '{count} relações',
 
+  'menu.undo': 'Desfazer',
+  'menu.redo': 'Refazer',
   'menu.addClass': 'Adicionar classe',
   'menu.hideClassPicker': 'Esconder o seletor de classes',
   'menu.addClassHint': 'Adiciona uma classe sem relação com o diagrama',
